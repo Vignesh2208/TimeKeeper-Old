@@ -1,0 +1,757 @@
+rm -f *.ko *.o *.mod.c Module.symvers
+make -C /lib/modules/3.13.1-rework-select/build M=/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code modules 
+make[1]: Entering directory `/usr/src/linux-headers-3.13.1-rework-select'
+  CC [M]  /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.o
+In file included from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.c:1:0:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:60:0: warning: "FSEC_PER_SEC" redefined
+ #define FSEC_PER_SEC    1000000000000000L
+ ^
+In file included from include/linux/stat.h:18:0,
+                 from include/linux/module.h:10,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:6,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.c:1:
+include/linux/time.h:18:0: note: this is the location of the previous definition
+ #define FSEC_PER_SEC 1000000000000000LL
+ ^
+In file included from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.c:1:0:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:65:0: warning: "POLL_STACK_ALLOC" redefined
+ #define POLL_STACK_ALLOC      256
+ ^
+In file included from include/linux/ring_buffer.h:7:0,
+                 from include/linux/ftrace_event.h:4,
+                 from include/trace/syscall.h:6,
+                 from include/linux/syscalls.h:79,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:18,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.c:1:
+include/linux/poll.h:20:0: note: this is the location of the previous definition
+ #define POLL_STACK_ALLOC FRONTEND_STACK_ALLOC
+ ^
+In file included from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.c:1:0:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:66:0: warning: "SELECT_STACK_ALLOC" redefined
+ #define SELECT_STACK_ALLOC      256
+ ^
+In file included from include/linux/ring_buffer.h:7:0,
+                 from include/linux/ftrace_event.h:4,
+                 from include/trace/syscall.h:6,
+                 from include/linux/syscalls.h:79,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:18,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.c:1:
+include/linux/poll.h:19:0: note: this is the location of the previous definition
+ #define SELECT_STACK_ALLOC FRONTEND_STACK_ALLOC
+ ^
+In file included from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.c:1:0:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:67:0: warning: "RLIMIT_NOFILE" redefined
+ #define RLIMIT_NOFILE           5       /* max number of open files */
+ ^
+In file included from include/asm-generic/resource.h:4:0,
+                 from /usr/src/linux-headers-3.13.1-rework-select/arch/x86/include/uapi/asm/resource.h:1,
+                 from include/uapi/linux/resource.h:77,
+                 from include/linux/resource.h:4,
+                 from include/linux/sched.h:47,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:9,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.c:1:
+include/uapi/asm-generic/resource.h:30:0: note: this is the location of the previous definition
+ # define RLIMIT_NOFILE  7 /* max number of open files */
+ ^
+In file included from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.c:1:0:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:174:0: warning: "CS" redefined
+ #define CS 2 //concurrent synchronized (S3F)
+ ^
+In file included from /usr/src/linux-headers-3.13.1-rework-select/arch/x86/include/uapi/asm/ptrace.h:5:0,
+                 from /usr/src/linux-headers-3.13.1-rework-select/arch/x86/include/asm/ptrace.h:6,
+                 from /usr/src/linux-headers-3.13.1-rework-select/arch/x86/include/asm/alternative.h:8,
+                 from /usr/src/linux-headers-3.13.1-rework-select/arch/x86/include/asm/bitops.h:16,
+                 from include/linux/bitops.h:33,
+                 from include/linux/kernel.h:10,
+                 from include/linux/cache.h:4,
+                 from include/linux/time.h:4,
+                 from include/linux/stat.h:18,
+                 from include/linux/module.h:10,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:6,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.c:1:
+/usr/src/linux-headers-3.13.1-rework-select/arch/x86/include/uapi/asm/ptrace-abi.h:19:0: note: this is the location of the previous definition
+ #define CS  13
+ ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.c: In function ‘my_module_init’:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.c:182:9: warning: initialization from incompatible pointer type
+  struct netlink_kernel_cfg cfg = { .input = send_a_message, };
+         ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.c:182:9: warning: (near initialization for ‘cfg.input’)
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.c:182:2: warning: ISO C90 forbids mixed declarations and code [-Wdeclaration-after-statement]
+  struct netlink_kernel_cfg cfg = { .input = send_a_message, };
+  ^
+  CC [M]  /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/general_commands.o
+In file included from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/general_commands.c:1:0:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:60:0: warning: "FSEC_PER_SEC" redefined
+ #define FSEC_PER_SEC    1000000000000000L
+ ^
+In file included from include/linux/stat.h:18:0,
+                 from include/linux/module.h:10,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:6,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/general_commands.c:1:
+include/linux/time.h:18:0: note: this is the location of the previous definition
+ #define FSEC_PER_SEC 1000000000000000LL
+ ^
+In file included from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/general_commands.c:1:0:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:65:0: warning: "POLL_STACK_ALLOC" redefined
+ #define POLL_STACK_ALLOC      256
+ ^
+In file included from include/linux/ring_buffer.h:7:0,
+                 from include/linux/ftrace_event.h:4,
+                 from include/trace/syscall.h:6,
+                 from include/linux/syscalls.h:79,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:18,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/general_commands.c:1:
+include/linux/poll.h:20:0: note: this is the location of the previous definition
+ #define POLL_STACK_ALLOC FRONTEND_STACK_ALLOC
+ ^
+In file included from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/general_commands.c:1:0:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:66:0: warning: "SELECT_STACK_ALLOC" redefined
+ #define SELECT_STACK_ALLOC      256
+ ^
+In file included from include/linux/ring_buffer.h:7:0,
+                 from include/linux/ftrace_event.h:4,
+                 from include/trace/syscall.h:6,
+                 from include/linux/syscalls.h:79,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:18,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/general_commands.c:1:
+include/linux/poll.h:19:0: note: this is the location of the previous definition
+ #define SELECT_STACK_ALLOC FRONTEND_STACK_ALLOC
+ ^
+In file included from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/general_commands.c:1:0:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:67:0: warning: "RLIMIT_NOFILE" redefined
+ #define RLIMIT_NOFILE           5       /* max number of open files */
+ ^
+In file included from include/asm-generic/resource.h:4:0,
+                 from /usr/src/linux-headers-3.13.1-rework-select/arch/x86/include/uapi/asm/resource.h:1,
+                 from include/uapi/linux/resource.h:77,
+                 from include/linux/resource.h:4,
+                 from include/linux/sched.h:47,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:9,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/general_commands.c:1:
+include/uapi/asm-generic/resource.h:30:0: note: this is the location of the previous definition
+ # define RLIMIT_NOFILE  7 /* max number of open files */
+ ^
+In file included from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/general_commands.c:1:0:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:174:0: warning: "CS" redefined
+ #define CS 2 //concurrent synchronized (S3F)
+ ^
+In file included from /usr/src/linux-headers-3.13.1-rework-select/arch/x86/include/uapi/asm/ptrace.h:5:0,
+                 from /usr/src/linux-headers-3.13.1-rework-select/arch/x86/include/asm/ptrace.h:6,
+                 from /usr/src/linux-headers-3.13.1-rework-select/arch/x86/include/asm/alternative.h:8,
+                 from /usr/src/linux-headers-3.13.1-rework-select/arch/x86/include/asm/bitops.h:16,
+                 from include/linux/bitops.h:33,
+                 from include/linux/kernel.h:10,
+                 from include/linux/cache.h:4,
+                 from include/linux/time.h:4,
+                 from include/linux/stat.h:18,
+                 from include/linux/module.h:10,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:6,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/general_commands.c:1:
+/usr/src/linux-headers-3.13.1-rework-select/arch/x86/include/uapi/asm/ptrace-abi.h:19:0: note: this is the location of the previous definition
+ #define CS  13
+ ^
+  CC [M]  /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.o
+In file included from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:1:0:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:60:0: warning: "FSEC_PER_SEC" redefined
+ #define FSEC_PER_SEC    1000000000000000L
+ ^
+In file included from include/linux/stat.h:18:0,
+                 from include/linux/module.h:10,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:6,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:1:
+include/linux/time.h:18:0: note: this is the location of the previous definition
+ #define FSEC_PER_SEC 1000000000000000LL
+ ^
+In file included from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:1:0:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:65:0: warning: "POLL_STACK_ALLOC" redefined
+ #define POLL_STACK_ALLOC      256
+ ^
+In file included from include/linux/ring_buffer.h:7:0,
+                 from include/linux/ftrace_event.h:4,
+                 from include/trace/syscall.h:6,
+                 from include/linux/syscalls.h:79,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:18,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:1:
+include/linux/poll.h:20:0: note: this is the location of the previous definition
+ #define POLL_STACK_ALLOC FRONTEND_STACK_ALLOC
+ ^
+In file included from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:1:0:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:66:0: warning: "SELECT_STACK_ALLOC" redefined
+ #define SELECT_STACK_ALLOC      256
+ ^
+In file included from include/linux/ring_buffer.h:7:0,
+                 from include/linux/ftrace_event.h:4,
+                 from include/trace/syscall.h:6,
+                 from include/linux/syscalls.h:79,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:18,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:1:
+include/linux/poll.h:19:0: note: this is the location of the previous definition
+ #define SELECT_STACK_ALLOC FRONTEND_STACK_ALLOC
+ ^
+In file included from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:1:0:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:67:0: warning: "RLIMIT_NOFILE" redefined
+ #define RLIMIT_NOFILE           5       /* max number of open files */
+ ^
+In file included from include/asm-generic/resource.h:4:0,
+                 from /usr/src/linux-headers-3.13.1-rework-select/arch/x86/include/uapi/asm/resource.h:1,
+                 from include/uapi/linux/resource.h:77,
+                 from include/linux/resource.h:4,
+                 from include/linux/sched.h:47,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:9,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:1:
+include/uapi/asm-generic/resource.h:30:0: note: this is the location of the previous definition
+ # define RLIMIT_NOFILE  7 /* max number of open files */
+ ^
+In file included from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:1:0:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:174:0: warning: "CS" redefined
+ #define CS 2 //concurrent synchronized (S3F)
+ ^
+In file included from /usr/src/linux-headers-3.13.1-rework-select/arch/x86/include/uapi/asm/ptrace.h:5:0,
+                 from /usr/src/linux-headers-3.13.1-rework-select/arch/x86/include/asm/ptrace.h:6,
+                 from /usr/src/linux-headers-3.13.1-rework-select/arch/x86/include/asm/alternative.h:8,
+                 from /usr/src/linux-headers-3.13.1-rework-select/arch/x86/include/asm/bitops.h:16,
+                 from include/linux/bitops.h:33,
+                 from include/linux/kernel.h:10,
+                 from include/linux/cache.h:4,
+                 from include/linux/time.h:4,
+                 from include/linux/stat.h:18,
+                 from include/linux/module.h:10,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:6,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:1:
+/usr/src/linux-headers-3.13.1-rework-select/arch/x86/include/uapi/asm/ptrace-abi.h:19:0: note: this is the location of the previous definition
+ #define CS  13
+ ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:63:1: warning: useless storage class specifier in empty declaration
+ };
+ ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c: In function ‘set_cbe_exp_timeslice’:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:119:3: warning: format ‘%d’ expects argument of type ‘int’, but argument 2 has type ‘s64’ [-Wformat=]
+   printk(KERN_INFO "TimeKeeper : Got Freeze Quantum : %d\n", timeslice);
+   ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c: In function ‘core_sync_exp’:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:391:17: warning: unused variable ‘ktime’ [-Wunused-variable]
+         ktime_t ktime;
+                 ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c: In function ‘calculate_sync_drift’:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:664:10: warning: unused variable ‘ktime’ [-Wunused-variable]
+  ktime_t ktime;
+          ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c: In function ‘catchup_func’:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:783:4: warning: format ‘%d’ expects argument of type ‘int’, but argument 2 has type ‘s64’ [-Wformat=]
+    printk(KERN_INFO "TimeKeeper: Current FREEZE_QUANTUM : %d\n", FREEZE_QUANTUM);
+    ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:800:4: warning: ISO C90 forbids mixed declarations and code [-Wdeclaration-after-statement]
+    int run_cpu;
+    ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:826:3: warning: label ‘end’ defined but not used [-Wunused-label]
+   end:
+   ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c: In function ‘exp_hrtimer_callback’:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:1001:2: warning: ISO C90 forbids mixed declarations and code [-Wdeclaration-after-statement]
+  int CPUID = callingtask->cpu_assignment - (TOTAL_CPUS - EXP_CPUS);
+  ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:997:17: warning: unused variable ‘ktime’ [-Wunused-variable]
+         ktime_t ktime;
+                 ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:996:13: warning: unused variable ‘startJob’ [-Wunused-variable]
+         int startJob;
+             ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c: In function ‘set_all_freeze_times_recurse’:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:1094:2: warning: ISO C90 forbids mixed declarations and code [-Wdeclaration-after-statement]
+  int i = 0;
+  ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:1034:38: warning: unused variable ‘dilTask’ [-Wunused-variable]
+         struct dilation_task_struct *dilTask;
+                                      ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c: In function ‘set_all_past_physical_times_recurse’:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:1160:2: warning: ISO C90 forbids mixed declarations and code [-Wdeclaration-after-statement]
+  int i = 0;
+  ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:1116:38: warning: unused variable ‘dilTask’ [-Wunused-variable]
+         struct dilation_task_struct *dilTask;
+                                      ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c: In function ‘search_lxc’:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:1205:2: warning: ISO C90 forbids mixed declarations and code [-Wdeclaration-after-statement]
+  int i = 0;
+  ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:1186:38: warning: unused variable ‘dilTask’ [-Wunused-variable]
+         struct dilation_task_struct *dilTask;
+                                      ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c: In function ‘resume_all’:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:1712:38: warning: unused variable ‘dilTask’ [-Wunused-variable]
+         struct dilation_task_struct *dilTask;
+                                      ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c: In function ‘unfreeze_each_process’:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:1881:4: warning: ISO C90 forbids mixed declarations and code [-Wdeclaration-after-statement]
+    s64 real_stopped_time;
+    ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:1882:8: warning: unused variable ‘dilated_running_time’ [-Wunused-variable]
+    s64 dilated_running_time;
+        ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:1904:8: warning: unused variable ‘new_real_running_time’ [-Wunused-variable]
+    s64 new_real_running_time;
+        ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:1903:8: warning: unused variable ‘old_real_running_time’ [-Wunused-variable]
+    s64 old_real_running_time;
+        ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c: In function ‘add_process_to_schedule_queue_recurse’:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:2010:6: warning: unused variable ‘now’ [-Wunused-variable]
+  s64 now;
+      ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:2009:17: warning: unused variable ‘ktv’ [-Wunused-variable]
+  struct timeval ktv;
+                 ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:2008:10: warning: unused variable ‘ktime’ [-Wunused-variable]
+  ktime_t ktime;
+          ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:2005:38: warning: unused variable ‘dilTask’ [-Wunused-variable]
+         struct dilation_task_struct *dilTask;
+                                      ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c: In function ‘run_schedule_queue_head_process’:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:2102:2: warning: ISO C90 forbids mixed declarations and code [-Wdeclaration-after-statement]
+  int CPUID = lxc->cpu_assignment - (TOTAL_CPUS - EXP_CPUS);
+  ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:2105:18: warning: passing argument 1 of ‘do_gettimeofday’ from incompatible pointer type
+  do_gettimeofday(&now);
+                  ^
+In file included from include/linux/stat.h:18:0,
+                 from include/linux/module.h:10,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:6,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:1:
+include/linux/time.h:156:13: note: expected ‘struct timeval *’ but argument is of type ‘s64 *’
+ extern void do_gettimeofday(struct timeval *tv);
+             ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:2106:25: warning: passing argument 1 of ‘timeval_to_ns’ from incompatible pointer type
+  now_ns = timeval_to_ns(&now);
+                         ^
+In file included from include/linux/stat.h:18:0,
+                 from include/linux/module.h:10,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:6,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:1:
+include/linux/time.h:234:19: note: expected ‘const struct timeval *’ but argument is of type ‘s64 *’
+ static inline s64 timeval_to_ns(const struct timeval *tv)
+                   ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:2214:2: warning: ISO C90 forbids mixed declarations and code [-Wdeclaration-after-statement]
+  int ret;
+  ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:2234:18: warning: passing argument 1 of ‘do_gettimeofday’ from incompatible pointer type
+  do_gettimeofday(&now);
+                  ^
+In file included from include/linux/stat.h:18:0,
+                 from include/linux/module.h:10,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:6,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:1:
+include/linux/time.h:156:13: note: expected ‘struct timeval *’ but argument is of type ‘s64 *’
+ extern void do_gettimeofday(struct timeval *tv);
+             ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:2235:32: warning: passing argument 1 of ‘timeval_to_ns’ from incompatible pointer type
+         now_ns = timeval_to_ns(&now);
+                                ^
+In file included from include/linux/stat.h:18:0,
+                 from include/linux/module.h:10,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:6,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:1:
+include/linux/time.h:234:19: note: expected ‘const struct timeval *’ but argument is of type ‘s64 *’
+ static inline s64 timeval_to_ns(const struct timeval *tv)
+                   ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:2214:6: warning: unused variable ‘ret’ [-Wunused-variable]
+  int ret;
+      ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:2081:17: warning: unused variable ‘ktv’ [-Wunused-variable]
+  struct timeval ktv;
+                 ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:2077:38: warning: unused variable ‘dilTask’ [-Wunused-variable]
+         struct dilation_task_struct *dilTask;
+                                      ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:2075:20: warning: unused variable ‘list’ [-Wunused-variable]
+  struct list_head *list;
+                    ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c: In function ‘unfreeze_proc_exp_recurse’:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:2308:3: warning: ISO C90 forbids mixed declarations and code [-Wdeclaration-after-statement]
+   ktime_t ktime;
+   ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:2323:3: warning: ISO C90 forbids mixed declarations and code [-Wdeclaration-after-statement]
+   lxc_schedule_elem * head;
+   ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/sync_experiment.c:2272:19: warning: unused variable ‘alt_timer’ [-Wunused-variable]
+  struct hrtimer * alt_timer = &aTask->timer;
+                   ^
+  CC [M]  /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/s3f_sync_experiment.o
+In file included from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/s3f_sync_experiment.c:1:0:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:60:0: warning: "FSEC_PER_SEC" redefined
+ #define FSEC_PER_SEC    1000000000000000L
+ ^
+In file included from include/linux/stat.h:18:0,
+                 from include/linux/module.h:10,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:6,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/s3f_sync_experiment.c:1:
+include/linux/time.h:18:0: note: this is the location of the previous definition
+ #define FSEC_PER_SEC 1000000000000000LL
+ ^
+In file included from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/s3f_sync_experiment.c:1:0:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:65:0: warning: "POLL_STACK_ALLOC" redefined
+ #define POLL_STACK_ALLOC      256
+ ^
+In file included from include/linux/ring_buffer.h:7:0,
+                 from include/linux/ftrace_event.h:4,
+                 from include/trace/syscall.h:6,
+                 from include/linux/syscalls.h:79,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:18,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/s3f_sync_experiment.c:1:
+include/linux/poll.h:20:0: note: this is the location of the previous definition
+ #define POLL_STACK_ALLOC FRONTEND_STACK_ALLOC
+ ^
+In file included from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/s3f_sync_experiment.c:1:0:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:66:0: warning: "SELECT_STACK_ALLOC" redefined
+ #define SELECT_STACK_ALLOC      256
+ ^
+In file included from include/linux/ring_buffer.h:7:0,
+                 from include/linux/ftrace_event.h:4,
+                 from include/trace/syscall.h:6,
+                 from include/linux/syscalls.h:79,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:18,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/s3f_sync_experiment.c:1:
+include/linux/poll.h:19:0: note: this is the location of the previous definition
+ #define SELECT_STACK_ALLOC FRONTEND_STACK_ALLOC
+ ^
+In file included from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/s3f_sync_experiment.c:1:0:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:67:0: warning: "RLIMIT_NOFILE" redefined
+ #define RLIMIT_NOFILE           5       /* max number of open files */
+ ^
+In file included from include/asm-generic/resource.h:4:0,
+                 from /usr/src/linux-headers-3.13.1-rework-select/arch/x86/include/uapi/asm/resource.h:1,
+                 from include/uapi/linux/resource.h:77,
+                 from include/linux/resource.h:4,
+                 from include/linux/sched.h:47,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:9,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/s3f_sync_experiment.c:1:
+include/uapi/asm-generic/resource.h:30:0: note: this is the location of the previous definition
+ # define RLIMIT_NOFILE  7 /* max number of open files */
+ ^
+In file included from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/s3f_sync_experiment.c:1:0:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:174:0: warning: "CS" redefined
+ #define CS 2 //concurrent synchronized (S3F)
+ ^
+In file included from /usr/src/linux-headers-3.13.1-rework-select/arch/x86/include/uapi/asm/ptrace.h:5:0,
+                 from /usr/src/linux-headers-3.13.1-rework-select/arch/x86/include/asm/ptrace.h:6,
+                 from /usr/src/linux-headers-3.13.1-rework-select/arch/x86/include/asm/alternative.h:8,
+                 from /usr/src/linux-headers-3.13.1-rework-select/arch/x86/include/asm/bitops.h:16,
+                 from include/linux/bitops.h:33,
+                 from include/linux/kernel.h:10,
+                 from include/linux/cache.h:4,
+                 from include/linux/time.h:4,
+                 from include/linux/stat.h:18,
+                 from include/linux/module.h:10,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:6,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/s3f_sync_experiment.c:1:
+/usr/src/linux-headers-3.13.1-rework-select/arch/x86/include/uapi/asm/ptrace-abi.h:19:0: note: this is the location of the previous definition
+ #define CS  13
+ ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/s3f_sync_experiment.c: In function ‘run_timeline_processes’:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/s3f_sync_experiment.c:393:6: warning: ISO C90 forbids mixed declarations and code [-Wdeclaration-after-statement]
+      int isSet = 0;
+      ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/s3f_sync_experiment.c:393:10: warning: unused variable ‘isSet’ [-Wunused-variable]
+      int isSet = 0;
+          ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/s3f_sync_experiment.c:364:9: warning: unused variable ‘isEmpty’ [-Wunused-variable]
+     int isEmpty = 0;
+         ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/s3f_sync_experiment.c:343:10: warning: unused variable ‘ktime’ [-Wunused-variable]
+  ktime_t ktime;
+          ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/s3f_sync_experiment.c:340:17: warning: unused variable ‘ktv’ [-Wunused-variable]
+  struct timeval ktv;
+                 ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/s3f_sync_experiment.c: In function ‘progress_timeline_thread’:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/s3f_sync_experiment.c:463:10: warning: unused variable ‘ktime’ [-Wunused-variable]
+  ktime_t ktime;
+          ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/s3f_sync_experiment.c: In function ‘s3f_hrtimer_callback’:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/s3f_sync_experiment.c:573:17: warning: unused variable ‘ktime’ [-Wunused-variable]
+         ktime_t ktime;
+                 ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/s3f_sync_experiment.c:571:13: warning: unused variable ‘startJob’ [-Wunused-variable]
+         int startJob;
+             ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/s3f_sync_experiment.c: In function ‘run_timeline_processes’:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/s3f_sync_experiment.c:368:34: warning: ‘now’ may be used uninitialized in this function [-Wmaybe-uninitialized]
+     if (tl->force == FORCE || ( (get_virtual_time(task, now) - task->expected_time) > task->increment) ) { //force the vt to be what you expect
+                                  ^
+  CC [M]  /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/util.o
+In file included from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/util.c:1:0:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:60:0: warning: "FSEC_PER_SEC" redefined
+ #define FSEC_PER_SEC    1000000000000000L
+ ^
+In file included from include/linux/stat.h:18:0,
+                 from include/linux/module.h:10,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:6,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/util.c:1:
+include/linux/time.h:18:0: note: this is the location of the previous definition
+ #define FSEC_PER_SEC 1000000000000000LL
+ ^
+In file included from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/util.c:1:0:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:65:0: warning: "POLL_STACK_ALLOC" redefined
+ #define POLL_STACK_ALLOC      256
+ ^
+In file included from include/linux/ring_buffer.h:7:0,
+                 from include/linux/ftrace_event.h:4,
+                 from include/trace/syscall.h:6,
+                 from include/linux/syscalls.h:79,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:18,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/util.c:1:
+include/linux/poll.h:20:0: note: this is the location of the previous definition
+ #define POLL_STACK_ALLOC FRONTEND_STACK_ALLOC
+ ^
+In file included from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/util.c:1:0:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:66:0: warning: "SELECT_STACK_ALLOC" redefined
+ #define SELECT_STACK_ALLOC      256
+ ^
+In file included from include/linux/ring_buffer.h:7:0,
+                 from include/linux/ftrace_event.h:4,
+                 from include/trace/syscall.h:6,
+                 from include/linux/syscalls.h:79,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:18,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/util.c:1:
+include/linux/poll.h:19:0: note: this is the location of the previous definition
+ #define SELECT_STACK_ALLOC FRONTEND_STACK_ALLOC
+ ^
+In file included from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/util.c:1:0:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:67:0: warning: "RLIMIT_NOFILE" redefined
+ #define RLIMIT_NOFILE           5       /* max number of open files */
+ ^
+In file included from include/asm-generic/resource.h:4:0,
+                 from /usr/src/linux-headers-3.13.1-rework-select/arch/x86/include/uapi/asm/resource.h:1,
+                 from include/uapi/linux/resource.h:77,
+                 from include/linux/resource.h:4,
+                 from include/linux/sched.h:47,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:9,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/util.c:1:
+include/uapi/asm-generic/resource.h:30:0: note: this is the location of the previous definition
+ # define RLIMIT_NOFILE  7 /* max number of open files */
+ ^
+In file included from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/util.c:1:0:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:174:0: warning: "CS" redefined
+ #define CS 2 //concurrent synchronized (S3F)
+ ^
+In file included from /usr/src/linux-headers-3.13.1-rework-select/arch/x86/include/uapi/asm/ptrace.h:5:0,
+                 from /usr/src/linux-headers-3.13.1-rework-select/arch/x86/include/asm/ptrace.h:6,
+                 from /usr/src/linux-headers-3.13.1-rework-select/arch/x86/include/asm/alternative.h:8,
+                 from /usr/src/linux-headers-3.13.1-rework-select/arch/x86/include/asm/bitops.h:16,
+                 from include/linux/bitops.h:33,
+                 from include/linux/kernel.h:10,
+                 from include/linux/cache.h:4,
+                 from include/linux/time.h:4,
+                 from include/linux/stat.h:18,
+                 from include/linux/module.h:10,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:6,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/util.c:1:
+/usr/src/linux-headers-3.13.1-rework-select/arch/x86/include/uapi/asm/ptrace-abi.h:19:0: note: this is the location of the previous definition
+ #define CS  13
+ ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/util.c:34:1: warning: useless storage class specifier in empty declaration
+ };
+ ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/util.c:35:15: warning: empty declaration with storage class specifier does not redeclare tag
+ extern struct poll_helper_struct;
+               ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/util.c: In function ‘add_to_schedule_list’:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/util.c:349:2: warning: ISO C90 forbids mixed declarations and code [-Wdeclaration-after-statement]
+  lxc_schedule_elem * new_element = (lxc_schedule_elem *)kmalloc(sizeof(lxc_schedule_elem), GFP_KERNEL);
+  ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/util.c:335:6: warning: unused variable ‘window_duration’ [-Wunused-variable]
+  s64 window_duration;
+      ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/util.c:327:6: warning: unused variable ‘dilation_factor’ [-Wunused-variable]
+  int dilation_factor;
+      ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/util.c:326:6: warning: unused variable ‘lowest_linux_time_quanta’ [-Wunused-variable]
+  int lowest_linux_time_quanta = 100; // 5 ms
+      ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/util.c: In function ‘pop_schedule_list’:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/util.c:454:2: warning: ISO C90 forbids mixed declarations and code [-Wdeclaration-after-statement]
+  lxc_schedule_elem * head;
+  ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/util.c:456:2: warning: ISO C90 forbids mixed declarations and code [-Wdeclaration-after-statement]
+  struct task_struct * curr_task;
+  ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/util.c: In function ‘requeue_schedule_list’:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/util.c:491:2: warning: ISO C90 forbids mixed declarations and code [-Wdeclaration-after-statement]
+  lxc_schedule_elem * head;
+  ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/util.c: In function ‘do_dialated_poll’:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/util.c:559:16: warning: unused variable ‘busy_end’ [-Wunused-variable]
+  unsigned long busy_end = 0;
+                ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/util.c: In function ‘do_dialated_select’:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/util.c:672:2: warning: ISO C90 forbids mixed declarations and code [-Wdeclaration-after-statement]
+  unsigned long *rinp, *routp, *rexp, *inp, *outp, *exp;
+  ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/util.c:658:16: warning: unused variable ‘busy_end’ [-Wunused-variable]
+  unsigned long busy_end = 0;
+                ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/util.c:656:16: warning: unused variable ‘slack’ [-Wunused-variable]
+  unsigned long slack = 0;
+                ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/util.c:655:17: warning: unused variable ‘timed_out’ [-Wunused-variable]
+  int retval, i, timed_out = 0;
+                 ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/util.c:652:19: warning: unused variable ‘to’ [-Wunused-variable]
+  ktime_t expire, *to = NULL;
+                   ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/util.c:652:10: warning: unused variable ‘expire’ [-Wunused-variable]
+  ktime_t expire, *to = NULL;
+          ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/util.c: In function ‘add_to_schedule_list’:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/util.c:428:2: warning: ‘expected_increase’ may be used uninitialized in this function [-Wmaybe-uninitialized]
+  printk(KERN_INFO "TimeKeeper : PID : %d, Base Quanta : %lld. N_threads : %d. expected_increase : %lld\n", new_task->pid, base_time_quanta, n_threads, expected_increase);
+  ^
+  CC [M]  /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/hooked_functions.o
+In file included from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/hooked_functions.c:1:0:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:60:0: warning: "FSEC_PER_SEC" redefined
+ #define FSEC_PER_SEC    1000000000000000L
+ ^
+In file included from include/linux/stat.h:18:0,
+                 from include/linux/module.h:10,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:6,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/hooked_functions.c:1:
+include/linux/time.h:18:0: note: this is the location of the previous definition
+ #define FSEC_PER_SEC 1000000000000000LL
+ ^
+In file included from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/hooked_functions.c:1:0:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:65:0: warning: "POLL_STACK_ALLOC" redefined
+ #define POLL_STACK_ALLOC      256
+ ^
+In file included from include/linux/ring_buffer.h:7:0,
+                 from include/linux/ftrace_event.h:4,
+                 from include/trace/syscall.h:6,
+                 from include/linux/syscalls.h:79,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:18,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/hooked_functions.c:1:
+include/linux/poll.h:20:0: note: this is the location of the previous definition
+ #define POLL_STACK_ALLOC FRONTEND_STACK_ALLOC
+ ^
+In file included from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/hooked_functions.c:1:0:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:66:0: warning: "SELECT_STACK_ALLOC" redefined
+ #define SELECT_STACK_ALLOC      256
+ ^
+In file included from include/linux/ring_buffer.h:7:0,
+                 from include/linux/ftrace_event.h:4,
+                 from include/trace/syscall.h:6,
+                 from include/linux/syscalls.h:79,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:18,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/hooked_functions.c:1:
+include/linux/poll.h:19:0: note: this is the location of the previous definition
+ #define SELECT_STACK_ALLOC FRONTEND_STACK_ALLOC
+ ^
+In file included from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/hooked_functions.c:1:0:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:67:0: warning: "RLIMIT_NOFILE" redefined
+ #define RLIMIT_NOFILE           5       /* max number of open files */
+ ^
+In file included from include/asm-generic/resource.h:4:0,
+                 from /usr/src/linux-headers-3.13.1-rework-select/arch/x86/include/uapi/asm/resource.h:1,
+                 from include/uapi/linux/resource.h:77,
+                 from include/linux/resource.h:4,
+                 from include/linux/sched.h:47,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:9,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/hooked_functions.c:1:
+include/uapi/asm-generic/resource.h:30:0: note: this is the location of the previous definition
+ # define RLIMIT_NOFILE  7 /* max number of open files */
+ ^
+In file included from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/hooked_functions.c:1:0:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:174:0: warning: "CS" redefined
+ #define CS 2 //concurrent synchronized (S3F)
+ ^
+In file included from /usr/src/linux-headers-3.13.1-rework-select/arch/x86/include/uapi/asm/ptrace.h:5:0,
+                 from /usr/src/linux-headers-3.13.1-rework-select/arch/x86/include/asm/ptrace.h:6,
+                 from /usr/src/linux-headers-3.13.1-rework-select/arch/x86/include/asm/alternative.h:8,
+                 from /usr/src/linux-headers-3.13.1-rework-select/arch/x86/include/asm/bitops.h:16,
+                 from include/linux/bitops.h:33,
+                 from include/linux/kernel.h:10,
+                 from include/linux/cache.h:4,
+                 from include/linux/time.h:4,
+                 from include/linux/stat.h:18,
+                 from include/linux/module.h:10,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:6,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/hooked_functions.c:1:
+/usr/src/linux-headers-3.13.1-rework-select/arch/x86/include/uapi/asm/ptrace-abi.h:19:0: note: this is the location of the previous definition
+ #define CS  13
+ ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/hooked_functions.c:27:1: warning: useless storage class specifier in empty declaration
+ };
+ ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/hooked_functions.c:28:15: warning: empty declaration with storage class specifier does not redeclare tag
+ extern struct poll_helper_struct;
+               ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/hooked_functions.c:29:15: warning: empty declaration with storage class specifier does not redeclare tag
+ extern struct select_helper_struct;
+               ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/hooked_functions.c: In function ‘sys_select_new’:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/hooked_functions.c:119:2: warning: ISO C90 forbids mixed declarations and code [-Wdeclaration-after-statement]
+  struct timespec end_time, *to = NULL;
+  ^
+In file included from include/linux/ring_buffer.h:7:0,
+                 from include/linux/ftrace_event.h:4,
+                 from include/trace/syscall.h:6,
+                 from include/linux/syscalls.h:79,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/dilation_module.h:18,
+                 from /home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/hooked_functions.c:1:
+include/linux/poll.h:120:47: error: invalid operands to binary / (have ‘struct list_head *’ and ‘unsigned int’)
+ #define FDS_LONGS(nr) (((nr)+FDS_BITPERLONG-1)/FDS_BITPERLONG)
+                                               ^
+include/linux/poll.h:121:24: note: in expansion of macro ‘FDS_LONGS’
+ #define FDS_BYTES(nr) (FDS_LONGS(nr)*sizeof(long))
+                        ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/hooked_functions.c:193:12: note: in expansion of macro ‘FDS_BYTES’
+     size = FDS_BYTES(n);
+            ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/hooked_functions.c:239:5: warning: format ‘%d’ expects argument of type ‘int’, but argument 3 has type ‘s64’ [-Wformat=]
+     printk(KERN_INFO "TimeKeeper : Select Process Waiting %d. Timeout sec %d, nsec %d.",current->pid,secs_to_sleep,nsecs_to_sleep);
+     ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/hooked_functions.c:239:5: warning: format ‘%d’ expects argument of type ‘int’, but argument 4 has type ‘s64’ [-Wformat=]
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/hooked_functions.c:122:30: warning: unused variable ‘len’ [-Wunused-variable]
+  int err = -EFAULT, fdcount, len, size;
+                              ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/hooked_functions.c:122:21: warning: unused variable ‘fdcount’ [-Wunused-variable]
+  int err = -EFAULT, fdcount, len, size;
+                     ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/hooked_functions.c:122:6: warning: unused variable ‘err’ [-Wunused-variable]
+  int err = -EFAULT, fdcount, len, size;
+      ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/hooked_functions.c:119:29: warning: unused variable ‘to’ [-Wunused-variable]
+  struct timespec end_time, *to = NULL;
+                             ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/hooked_functions.c:119:18: warning: unused variable ‘end_time’ [-Wunused-variable]
+  struct timespec end_time, *to = NULL;
+                  ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/hooked_functions.c:110:31: warning: unused variable ‘dilTask’ [-Wunused-variable]
+  struct dilation_task_struct *dilTask;
+                               ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/hooked_functions.c: In function ‘sys_poll_new’:
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/hooked_functions.c:284:2: warning: ISO C90 forbids mixed declarations and code [-Wdeclaration-after-statement]
+  struct timespec end_time, *to = NULL;
+  ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/hooked_functions.c:412:5: warning: format ‘%d’ expects argument of type ‘int’, but argument 3 has type ‘s64’ [-Wformat=]
+     printk(KERN_INFO "TimeKeeper : Poll Process Waiting %d. Timeout sec %d, nsec %d.",current->pid,secs_to_sleep,nsecs_to_sleep);
+     ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/hooked_functions.c:412:5: warning: format ‘%d’ expects argument of type ‘int’, but argument 4 has type ‘s64’ [-Wformat=]
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/hooked_functions.c:287:21: warning: unused variable ‘fdcount’ [-Wunused-variable]
+  int err = -EFAULT, fdcount, len, size;
+                     ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/hooked_functions.c:285:6: warning: unused variable ‘ret’ [-Wunused-variable]
+  int ret;
+      ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/hooked_functions.c:284:29: warning: unused variable ‘to’ [-Wunused-variable]
+  struct timespec end_time, *to = NULL;
+                             ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/hooked_functions.c:284:18: warning: unused variable ‘end_time’ [-Wunused-variable]
+  struct timespec end_time, *to = NULL;
+                  ^
+/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/hooked_functions.c:275:31: warning: unused variable ‘dilTask’ [-Wunused-variable]
+  struct dilation_task_struct *dilTask;
+                               ^
+make[2]: *** [/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code/hooked_functions.o] Error 1
+make[1]: *** [_module_/home/vignesh/Desktop/PLCs/awlsim-0.42/s3fnet-lxc/dilation-code] Error 2
+make[1]: Leaving directory `/usr/src/linux-headers-3.13.1-rework-select'
+make: *** [modules] Error 2
