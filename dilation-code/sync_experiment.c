@@ -1334,8 +1334,7 @@ void clean_exp() {
 
 	orig_cr0 = read_cr0();
 	write_cr0(orig_cr0 & ~0x00010000);
-        sys_call_table[__NR_poll] = (unsigned long *)ref_sys_poll;
-	sys_call_table[__NR_select] = (unsigned long *)  ref_sys_select;
+    sys_call_table[__NR_poll] = (unsigned long *)ref_sys_poll;	
 	write_cr0(orig_cr0);
 
 }
