@@ -322,6 +322,7 @@
 313	common	finit_module		sys_finit_module
 314     common  gettimeofdayreal        sys_gettimeofdayreal
 315 	common	gettimepid		sys_gettimepid
+316	common	select_dialated		sys_select_dialated
 
 #
 # x32-specific system call numbers start at 512 to avoid cache impact

@@ -254,7 +254,7 @@ void sync_and_freeze() {
 	// hook poll system call here
 	orig_cr0 = read_cr0();
 	write_cr0(orig_cr0 & ~0x00010000);
-	//sys_call_table[__NR_select] = (unsigned long *) sys_select_new;
+	sys_call_table[__NR_select_dialated] = (unsigned long *) sys_select_new;
 	sys_call_table[__NR_poll] = (unsigned long *) sys_poll_new;
 	write_cr0(orig_cr0);
 
@@ -1336,6 +1336,7 @@ void clean_exp() {
     	orig_cr0 = read_cr0();
 		write_cr0(orig_cr0 & ~0x00010000);
     	sys_call_table[__NR_poll] = (unsigned long *)ref_sys_poll;	
+    	sys_call_table[__NR_select_dialated] = (unsigned long *)ref_sys_select;	
 		write_cr0(orig_cr0);
     }
 	experiment_type = NOTSET;
@@ -1525,9 +1526,9 @@ void set_children_cpu(struct task_struct *aTask, int cpu) {
 Freezes all children associated with a container
 ***/
 int freeze_children(struct task_struct *aTask, s64 time) {
-        struct list_head *list;
-        struct task_struct *taskRecurse;
-        struct dilation_task_struct *dilTask;
+    struct list_head *list;
+    struct task_struct *taskRecurse;
+    struct dilation_task_struct *dilTask;
 	struct task_struct *me;
 	struct task_struct *t;
         if (aTask == NULL) {

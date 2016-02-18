@@ -399,7 +399,7 @@ static inline void wait_key_set(poll_table *wait, unsigned long in,
 }
 
 
-s64 get_curr_dilated_time_pid(pid_t pid)
+s64 get_curr_dilated_time_pid(void)
 {
 	s64 temp_past_physical_time;
 	s32 rem;
@@ -415,6 +415,8 @@ s64 get_curr_dilated_time_pid(pid_t pid)
 		if (task->group_leader != task) { //use virtual time of the leader thread
                        	task = task->group_leader;
                	}
+
+		spin_lock(&task->dialation_lock);
 
 		if(task->freeze_time == 0){
 			real_running_time = now - task->virt_start_time;
@@ -443,9 +445,11 @@ s64 get_curr_dilated_time_pid(pid_t pid)
 			now = dilated_running_time + task->virt_start_time;
 		}
 		if(task->freeze_time == 0){
-		task->past_physical_time = real_running_time;
-		task->past_virtual_time = dilated_running_time;
+			task->past_physical_time = real_running_time;
+			task->past_virtual_time = dilated_running_time;
 		}
+
+		spin_unlock(&task->dialation_lock);
 	
 	}
 	return now;	
@@ -505,9 +509,6 @@ int do_select(int n, fd_set_bits *fds, struct timespec *end_time)
 	rcu_read_unlock();
 
 	if (retval < 0){
-		if(current->virt_start_time != 0){
-			printk(KERN_INFO "Select@@@@@@@@@@@@@@@@@@@@@@@@ : Exited from select Error. PID : %d", current->pid);
-		}
 		return retval;
 
 	}
@@ -523,16 +524,25 @@ int do_select(int n, fd_set_bits *fds, struct timespec *end_time)
 	if (end_time && !timed_out)
 		slack = select_estimate_accuracy(end_time);
 	
+	spin_lock(&current->dialation_lock);
 	if(current->virt_start_time != 0 && end_time != NULL){
+		spin_unlock(&current->dialation_lock);
+
 		is_dilated = 1;
 		secs_to_sleep = (unsigned int) end_time->tv_sec;
 		nsecs_to_sleep = end_time->tv_nsec;
-		curr_dilated_time = get_curr_dilated_time_pid(current->pid);
+		curr_dilated_time = get_curr_dilated_time_pid();
 		timeout_time = curr_dilated_time + ((secs_to_sleep*1000000000) + nsecs_to_sleep);
+		if(secs_to_sleep == 0 && nsecs_to_sleep == 0){
+			wait->_qproc = NULL;
+			timed_out = 1;
+		}
+		spin_lock(&current->dialation_lock);
 		printk(KERN_INFO "Select@@@@@@@@@@@@@@@@@@ Initialized start time : %lld, timeout time to %lld. PID %d ", curr_dilated_time, timeout_time,current->pid);
-		printk(KERN_INFO "Select@@@@@@@@@@@@@@@@@@ Initialized secs_to_sleep %d, nsecs_To_sleep %d. PID %d ", secs_to_sleep,nsecs_to_sleep,current->pid);
+		printk(KERN_INFO "Select@@@@@@@@@@@@@@@@@@ Initialized secs_to_sleep %d, nsecs_To_sleep %d. Dialation factor : %d, PID %d ", secs_to_sleep,nsecs_to_sleep,current->dilation_factor, current->pid);
 
 	}
+	spin_unlock(&current->dialation_lock);
 
 	retval = 0;
 	for (;;) {
@@ -657,10 +667,12 @@ int do_select(int n, fd_set_bits *fds, struct timespec *end_time)
 
 		}
 		else{
-			curr_dilated_time = get_curr_dilated_time_pid(current->pid);
-			printk(KERN_INFO "Select@@@@@@@@@@@@@@@@@@@ : Entered this. curr time = %lld. PID : %d",curr_dilated_time, current->pid);
-			printk(KERN_INFO "Select@@@@@@@@@@@@@@@@@@@ : secs_to_sleep : %d, nsec_to_sleep : %d. dilation_factor = %d, PID %d",secs_to_sleep,nsecs_to_sleep, current->dilation_factor, current->pid);
-			printk(KERN_INFO "Select@@@@@@@@@@@@@@@@@@@ : Timeout time = %lld. PID %d",timeout_time,current->pid);
+			if(secs_to_sleep == 0 && nsecs_to_sleep == 0){
+				wait->_qproc = NULL;
+				timed_out = 1;
+			}
+
+			curr_dilated_time = get_curr_dilated_time_pid();
 			if(curr_dilated_time > timeout_time){
 				printk(KERN_INFO "Select@@@@@@@@@@@@@@@@@@@ : Timed out %lld, %lld ", curr_dilated_time, timeout_time);
 				timed_out = 1;
@@ -669,19 +681,14 @@ int do_select(int n, fd_set_bits *fds, struct timespec *end_time)
 				
 				if (!to) {
 
-					printk(KERN_INFO "Select@@@@@@@@@@@@@@@@@@@ : Inside this. PID = %d",current->pid);
 					sleep_time.tv_sec = 1;
-					//sleep_time.tv_nsec = 500000000; // 500ms
 					sleep_time.tv_nsec = 0;
 					expire = timespec_to_ktime(sleep_time);
 					to = &expire;
-					printk(KERN_INFO "Select@@@@@@@@@@@@@@@@@@@ : Finished this. PID = %d",current->pid);
 				}
-				// repeatedly sleep for 500 ms
-					printk(KERN_INFO "Select@@@@@@@@@@@@@@@@@@@ : Sleeping. PID : %d", current->pid);
+				// repeatedly perform interruptible sleep for 1 sec
 				if (!poll_relative_schedule_timeout(&table, TASK_INTERRUPTIBLE,to, 0)){
-					printk(KERN_INFO "Select@@@@@@@@@@@@@@@@@@@ : After schedule finished. PID : %d", current->pid);
-					curr_dilated_time = get_curr_dilated_time_pid(current->pid);
+					curr_dilated_time = get_curr_dilated_time_pid();
 					if(curr_dilated_time > timeout_time){
 						printk(KERN_INFO "Select@@@@@@@@@@@@@@@@@@@ : Timed out completely %lld, %lld ", curr_dilated_time, timeout_time);
 						timed_out = 1;
@@ -696,8 +703,6 @@ int do_select(int n, fd_set_bits *fds, struct timespec *end_time)
 	}
 
 	
-	if(is_dilated)
-		printk(KERN_INFO "Select@@@@@@@@@@@@@@@@@@@@@@@@ : Exited from do_select correctly. PID %d",current->pid);
 	poll_freewait(&table);
 	return retval;
 }
@@ -762,19 +767,7 @@ int core_sys_select(int n, fd_set __user *inp, fd_set __user *outp,
 	zero_fd_set(n, fds.res_out);
 	zero_fd_set(n, fds.res_ex);
 
-	/*if(current->group_leader != NULL)
-		printk(KERN_INFO "Made do_select call PID %d, group leader PID %d",current->pid,current->group_leader->pid);
-	else
-		printk(KERN_INFO "Made do_select call PID %d",current->pid);
-	*/
-
 	ret = do_select(n, &fds, end_time);
-
-	/*if(current->group_leader != NULL)
-		printk(KERN_INFO "Finished do_select call PID %d, group leader PID %d",current->pid,current->group_leader->pid);
-	else
-		printk(KERN_INFO "Finished do_select call PID %d",current->pid);
-	*/
 
 	if (ret < 0)
 		goto out;
@@ -810,7 +803,9 @@ SYSCALL_DEFINE5(select, int, n, fd_set __user *, inp, fd_set __user *, outp,
 			return -EFAULT;
 
 		to = &end_time;
+		spin_lock(&current->dialation_lock);
 		if(current->virt_start_time == 0){
+			spin_unlock(&current->dialation_lock);
 			if (poll_select_set_timeout(to,
 					tv.tv_sec + (tv.tv_usec / USEC_PER_SEC),
 					(tv.tv_usec % USEC_PER_SEC) * NSEC_PER_USEC))
@@ -819,12 +814,7 @@ SYSCALL_DEFINE5(select, int, n, fd_set __user *, inp, fd_set __user *, outp,
 
 		}
 		else{
-			/*
-			if(current->group_leader != NULL)
-				printk(KERN_INFO "Made select call PID %d, group leader PID %d",current->pid,current->group_leader->pid);
-			else
-				printk(KERN_INFO "Made select call PID %d",current->pid);
-			*/
+			spin_unlock(&current->dialation_lock);
 
 			end_time.tv_sec = tv.tv_sec + (tv.tv_usec / USEC_PER_SEC);
 			end_time.tv_nsec = (tv.tv_usec % USEC_PER_SEC) * NSEC_PER_USEC;
@@ -845,6 +835,27 @@ SYSCALL_DEFINE5(select, int, n, fd_set __user *, inp, fd_set __user *, outp,
 
 
 
+}
+
+
+SYSCALL_DEFINE5(select_dialated, int, n, fd_set __user *, inp, fd_set __user *, outp,
+		fd_set __user *, exp, struct timeval __user *, tvp)
+{
+	// just replicate the functionality of select if it is called. This function
+	// should never get called if TimeKeeper is running. It behaves like normal
+	// select if it is called when TimeKeeper is not running.
+	
+
+	/*spin_lock(&current->dialation_lock);
+	if(current->virt_start_time == 0){
+		spin_unlock(&current->dialation_lock);
+		return -EFAULT; // process is not dialated. cannot call select_dialated
+	}
+	spin_unlock(&current->dialation_lock);
+	*/
+
+	return sys_select(n,inp,outp,exp,tvp);
+	
 }
 
 static long do_pselect(int n, fd_set __user *inp, fd_set __user *outp,
@@ -994,12 +1005,7 @@ static int do_poll(unsigned int nfds,  struct poll_list *list,
 	unsigned long slack = 0;
 	unsigned int busy_flag = net_busy_loop_on() ? POLL_BUSY_LOOP : 0;
 	unsigned long busy_end = 0;
-	s64 secs_to_sleep;
-	s64 nsecs_to_sleep;
-	s64 curr_dilated_time;
-	s64 timeout_time;
-	struct timespec sleep_time;
-	int is_dilated = 0;
+
 
 	/* Optimise the no-wait case */
 	if (end_time && !end_time->tv_sec && !end_time->tv_nsec) {
@@ -1009,21 +1015,6 @@ static int do_poll(unsigned int nfds,  struct poll_list *list,
 
 	if (end_time && !timed_out)
 		slack = select_estimate_accuracy(end_time);
-
-
-	if(current->virt_start_time != 0 && end_time != NULL){
-		
-		is_dilated = 1;
-		secs_to_sleep = (unsigned int) end_time->tv_sec;
-		nsecs_to_sleep = end_time->tv_nsec;
-		curr_dilated_time = get_curr_dilated_time_pid(current->pid);
-		timeout_time = curr_dilated_time + ((secs_to_sleep*1000000000) + nsecs_to_sleep);
-		printk(KERN_INFO "Poll@@@@@@@@@@@@@@@@@@ Initialized start time : %lld, timeout time to %lld. PID %d ", curr_dilated_time, timeout_time,current->pid);
-		printk(KERN_INFO "Poll@@@@@@@@@@@@@@@@@@ Initialized secs_to_sleep %d, nsecs_To_sleep %d. PID %d ", secs_to_sleep,nsecs_to_sleep,current->pid);
-		
-
-	}
-
 
 	for (;;) {
 		struct poll_list *walk;
@@ -1057,97 +1048,37 @@ static int do_poll(unsigned int nfds,  struct poll_list *list,
 		 * a poll_table->_qproc to them on the next loop iteration.
 		 */
 		pt->_qproc = NULL;
-		
-		if(is_dilated == 0){
-			if (!count) {
-				count = wait->error;
-				if (signal_pending(current))
+		if (!count) {
+			count = wait->error;
+			if (signal_pending(current))
 				count = -EINTR;
-			}
-
 		}
 		if (count || timed_out)
 			break;
 
 		/* only if found POLL_BUSY_LOOP sockets && not out of time */
-		if(is_dilated == 0){
-			if (can_busy_loop && !need_resched()) {
-				if (!busy_end) {
-					busy_end = busy_loop_end_time();
-					continue;
-				}
-				if (!busy_loop_timeout(busy_end))
-					continue;
+		if (can_busy_loop && !need_resched()) {
+			if (!busy_end) {
+				busy_end = busy_loop_end_time();
+				continue;
 			}
-			
+			if (!busy_loop_timeout(busy_end))
+				continue;
 		}
-
 		busy_flag = 0;
-
-		if(is_dilated == 0){
-			if (end_time && !to) {
-				expire = timespec_to_ktime(*end_time);
-				to = &expire;
-			}
-
-			if (!poll_schedule_timeout(wait, TASK_INTERRUPTIBLE,
-						   to, slack))
-				timed_out = 1;
-
-		}
-		else{
-			curr_dilated_time = get_curr_dilated_time_pid(current->pid);
-			printk(KERN_INFO "Poll@@@@@@@@@@@@@@@@@@@ : Entered this. curr time = %lld. PID : %d",curr_dilated_time, current->pid);
-			printk(KERN_INFO "Poll@@@@@@@@@@@@@@@@@@@ : secs_to_sleep : %d, nsec_to_sleep : %d. dilation_factor = %d, PID %d",secs_to_sleep,nsecs_to_sleep, current->dilation_factor, current->pid);
-			printk(KERN_INFO "Poll@@@@@@@@@@@@@@@@@@@ : Timeout time = %lld. PID %d",timeout_time,current->pid);
-			if(curr_dilated_time > timeout_time){
-				printk(KERN_INFO "Poll@@@@@@@@@@@@@@@@@@@ : Timed out %lld, %lld ", curr_dilated_time, timeout_time);
-				timed_out = 1;
-			}
-			else{
-				
-				if (!to) {
-
-					printk(KERN_INFO "Poll@@@@@@@@@@@@@@@@@@@ : Inside this. PID = %d",current->pid);
-					sleep_time.tv_sec = 1;
-					//sleep_time.tv_nsec = 500000000; // 500ms
-					sleep_time.tv_nsec = 0;
-					expire = timespec_to_ktime(sleep_time);
-					to = &expire;
-					printk(KERN_INFO "Poll@@@@@@@@@@@@@@@@@@@ : Finished this. PID = %d",current->pid);
-				}
-				// repeatedly sleep for 500 ms
-				printk(KERN_INFO "Poll@@@@@@@@@@@@@@@@@@@ : Sleeping. PID : %d", current->pid);
-				if (!poll_relative_schedule_timeout(wait, TASK_INTERRUPTIBLE,to, 0)){
-					printk(KERN_INFO "Poll@@@@@@@@@@@@@@@@@@@ : After schedule finished. PID : %d", current->pid);
-					curr_dilated_time = get_curr_dilated_time_pid(current->pid);
-					if(curr_dilated_time > timeout_time){
-						printk(KERN_INFO "Poll@@@@@@@@@@@@@@@@@@@ : Timed out completely %lld, %lld ", curr_dilated_time, timeout_time);
-						timed_out = 1;
-					}	
-	
-				}
-			
-			
-			}
-		}
-		
-
-
 
 		/*
 		 * If this is the first loop and we have a timeout
 		 * given, then we convert to ktime_t and set the to
 		 * pointer to the expiry value.
 		 */
-		/*if (end_time && !to) {
+		if (end_time && !to) {
 			expire = timespec_to_ktime(*end_time);
 			to = &expire;
 		}
 
 		if (!poll_schedule_timeout(wait, TASK_INTERRUPTIBLE, to, slack))
 			timed_out = 1;
-		*/
 	}
 	return count;
 }
@@ -1250,20 +1181,8 @@ SYSCALL_DEFINE3(poll, struct pollfd __user *, ufds, unsigned int, nfds,
 
 	if (timeout_msecs >= 0) {
 		to = &end_time;
-		if(current->virt_start_time == 0){
-			poll_select_set_timeout(to, timeout_msecs / MSEC_PER_SEC,
+		poll_select_set_timeout(to, timeout_msecs / MSEC_PER_SEC,
 				NSEC_PER_MSEC * (timeout_msecs % MSEC_PER_SEC));
-
-		}
-		else{
-			
-			end_time.tv_sec = timeout_msecs / MSEC_PER_SEC;
-			end_time.tv_nsec = (timeout_msecs % MSEC_PER_SEC) * NSEC_PER_MSEC;
-			ret = do_sys_poll(ufds,nfds,to);
-			
-			return ret;
-
-		}
 	}
 
 	ret = do_sys_poll(ufds, nfds, to);

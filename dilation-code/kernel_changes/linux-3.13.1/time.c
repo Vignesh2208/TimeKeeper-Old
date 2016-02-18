@@ -168,7 +168,14 @@ SYSCALL_DEFINE2(gettimeofday, struct timeval __user *, tv,
 			s32 rem;
 			s64 real_running_time;
 			s64 dilated_running_time;
-			real_running_time = now - task->virt_start_time;
+
+			if(task->freeze_time == 0){
+				real_running_time = now - task->virt_start_time;
+			}
+			else{
+				real_running_time = task->freeze_time - task->virt_start_time;
+			}
+			
 			if (task->dilation_factor > 0) {
 				dilated_running_time = div_s64_rem( (real_running_time - task->past_physical_time)*1000 ,task->dilation_factor,&rem) + task->past_virtual_time;
 				now = dilated_running_time + task->virt_start_time;
@@ -182,8 +189,10 @@ SYSCALL_DEFINE2(gettimeofday, struct timeval __user *, tv,
 				now = dilated_running_time + task->virt_start_time;
 			}
 			ktv = ns_to_timeval(now);
+			if(task->freeze_time == 0){
 			task->past_physical_time = real_running_time;
 			task->past_virtual_time = dilated_running_time;
+			}
 		}
 		if (copy_to_user(tv, &ktv, sizeof(ktv)))
 			return -EFAULT;

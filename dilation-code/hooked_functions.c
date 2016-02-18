@@ -101,16 +101,16 @@ asmlinkage int sys_select_new(int k, fd_set __user *inp, fd_set __user *outp, fd
 	printk(KERN_INFO "TimeKeeper : Calling Ref select PID : %d\n",current->pid);
 
 	struct list_head *pos;
-        struct list_head *n;
-        struct dilation_task_struct* task;
+    struct list_head *n;
+    struct dilation_task_struct* task;
 	struct dilation_task_struct *dilTask;
-        struct timeval ktv;
+    struct timeval ktv;
 	struct task_struct *current_task;
-        s64 now;
+    s64 now;
 	s64 now_new;
-        s32 rem;
-        s64 real_running_time;
-        s64 dilated_running_time;
+    s32 rem;
+    s64 real_running_time;
+    s64 dilated_running_time;
 	current_task = current;
 	struct timespec end_time, *to = NULL;
 	int ret;

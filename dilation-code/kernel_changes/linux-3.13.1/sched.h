@@ -1225,6 +1225,8 @@ struct task_struct {
 	s64 past_physical_time;
 	s64 past_virtual_time;
 	int dilation_factor;
+	spinlock_t dialation_lock;
+	
 
 	sigset_t blocked, real_blocked;
 	sigset_t saved_sigmask;	/* restored if set_restore_sigmask() was used */

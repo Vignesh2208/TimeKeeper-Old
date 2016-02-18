@@ -598,6 +598,10 @@ asmlinkage long sys_poll(struct pollfd __user *ufds, unsigned int nfds,
 				int timeout);
 asmlinkage long sys_select(int n, fd_set __user *inp, fd_set __user *outp,
 			fd_set __user *exp, struct timeval __user *tvp);
+asmlinkage long sys_select_dialated(int n, fd_set __user *inp, fd_set __user *outp,
+			fd_set __user *exp, struct timeval __user *tvp);
+
+
 asmlinkage long sys_old_select(struct sel_arg_struct __user *arg);
 asmlinkage long sys_epoll_create(int size);
 asmlinkage long sys_epoll_create1(int flags);
@@ -816,7 +820,6 @@ asmlinkage long sys_gettimeofdayreal(struct timeval __user *tv,
                                 struct timezone __user *tz);
 asmlinkage long sys_gettimepid(pid_t pid, struct timeval __user *tv,
                                 struct timezone __user *tz);
-
 
 asmlinkage long sys_execve(const char __user *filename,
 		const char __user *const __user *argv,

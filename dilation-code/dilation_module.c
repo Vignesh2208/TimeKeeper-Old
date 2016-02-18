@@ -223,10 +223,10 @@ int __init my_module_init(void)
 	write_cr0(original_cr0 & ~0x00010000);
 	ref_sys_sleep = (void *)sys_call_table[__NR_nanosleep];        
 	ref_sys_poll = (void *)sys_call_table[__NR_poll];
-	//ref_sys_poll_dialated = (void *) sys_call_table[__NR_poll_dialated];
-	//ref_sys_select = (void *) sys_call_table[__NR_select];
-	//ref_sys_select_dialated = (void *) sys_call_table[__NR_select_dialated];
+	ref_sys_select = (void *) sys_call_table[__NR_select_dialated];
 	sys_call_table[__NR_nanosleep] = (unsigned long *)sys_sleep_new;
+	//ref_sys_poll_dialated = (void *) sys_call_table[__NR_poll_dialated];	
+	//ref_sys_select_dialated = (void *) sys_call_table[__NR_select_dialated];
 	//sys_call_table[__NR_select] = (unsigned long *) sys_select_new;
 	//sys_call_table[__NR_poll] = (unsigned long *) sys_poll_new;
 	write_cr0(original_cr0);
@@ -274,8 +274,8 @@ void __exit my_module_exit(void)
 
 	write_cr0(original_cr0 & ~0x00010000);
     sys_call_table[__NR_nanosleep] = (unsigned long *)ref_sys_sleep;
-	//sys_call_table[__NR_poll] = (unsigned long *) ref_sys_poll;
-	//sys_call_table[__NR_select] = (unsigned long *)  ref_sys_select;
+    sys_call_table[__NR_select_dialated] = (unsigned long *)  ref_sys_select;
+	//sys_call_table[__NR_poll] = (unsigned long *) ref_sys_poll;	
 	write_cr0(original_cr0);
 
 
