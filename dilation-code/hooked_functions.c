@@ -40,17 +40,17 @@ Hooks the sleep system call, so the process will wake up when it reaches the exp
 not the system time
 */
 asmlinkage long sys_sleep_new(struct timespec __user *rqtp, struct timespec __user *rmtp) {
-        struct list_head *pos;
-        struct list_head *n;
-        struct dilation_task_struct* task;
+    struct list_head *pos;
+    struct list_head *n;
+    struct dilation_task_struct* task;
 	struct dilation_task_struct *dilTask;
-        struct timeval ktv;
+    struct timeval ktv;
 	struct task_struct *current_task;
-        s64 now;
+    s64 now;
 	s64 now_new;
-        s32 rem;
-        s64 real_running_time;
-        s64 dilated_running_time;
+    s32 rem;
+    s64 real_running_time;
+    s64 dilated_running_time;
 	current_task = current;
 
 	spin_lock(&current->dialation_lock);
@@ -172,8 +172,10 @@ asmlinkage int sys_select_new(int k, fd_set __user *inp, fd_set __user *outp, fd
 				select_helper->done = 0;
 				select_helper->ret = -EFAULT;
 
-				if(select_helper->bits == NULL)
+				if(select_helper->bits == NULL){
+					kfree(select_helper);
 					return -ENOMEM;
+				}
 
 
 				/* max_fds can increase, so grab it once to avoid race */
@@ -237,9 +239,10 @@ asmlinkage int sys_select_new(int k, fd_set __user *inp, fd_set __user *outp, fd
 				printk(KERN_INFO "TimeKeeper : Select Process Waiting %d. Timeout sec %d, nsec %d.",current->pid,secs_to_sleep,nsecs_to_sleep);
 				printk(KERN_INFO "TimeKeeper : Select Process Waiting %d. Curr time %lld, Wakeup time %lld",current->pid,now_new,current->wakeup_time);
 				spin_unlock(&current->dialation_lock);
-				select_helper->n = k;				
+				select_helper->n = k;	
+				printk(KERN_INFO "TimeKeeper : Select nfds = %lu\n",select_helper->n);
 
-
+				hmap_put(&select_process_lookup, &current->pid, select_helper);
 				wait_event(select_helper->w_queue,select_helper->done == 1);
 				set_current_state(TASK_RUNNING);
 				printk(KERN_INFO "TimeKeeper : Resumed Select Process %d\n",current->pid);

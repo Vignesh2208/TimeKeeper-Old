@@ -16,3 +16,4 @@ all: TimeKeeper_functions.c
 	gcc -o timekeeper-reset timekeeper-reset.c TimeKeeper_functions.c -I. utility_functions.o -Wall
 	gcc -o timekeeper-progress timekeeper-progress.c TimeKeeper_functions.c -I. utility_functions.o -Wall
 	gcc -o random_ping random_ping.c -Wall
+	gcc -o select_dialated select_dialated.c TimeKeeper_functions.c utility_functions.o -Wall

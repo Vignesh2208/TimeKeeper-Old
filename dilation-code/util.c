@@ -595,7 +595,7 @@ int do_dialated_poll(unsigned int nfds,  struct poll_list *list,
 }
 
 
-int max_sel_fd(unsigned long n, fd_set_bits *fds)
+int max_sel_fd(unsigned long n, fd_set_bits *fds,struct task_struct * tsk)
 {
 	unsigned long *open_fds;
 	unsigned long set;
@@ -605,11 +605,14 @@ int max_sel_fd(unsigned long n, fd_set_bits *fds)
 	/* handle last in-complete long-word first */
 	set = ~(~0UL << (n & (BITS_PER_LONG-1)));
 	n /= BITS_PER_LONG;
-	fdt = files_fdtable(current->files);
+	fdt = files_fdtable(tsk->files);
 	open_fds = fdt->open_fds + n;
+	printk(KERN_INFO "TimeKeeper : max_sel_fd : n = %lu\n",n);
+
 	max = 0;
 	if (set) {
 		set &= BITS(fds, n);
+		printk(KERN_INFO "TimeKeeper : max_sel_fd : finished this\n");
 		if (set) {
 			if (!(set & ~*open_fds))
 				goto get_max;
@@ -647,7 +650,7 @@ void wait_k_set(poll_table *wait, unsigned long in,unsigned long out, unsigned l
 }
 
 
-int do_dialated_select(int n, fd_set_bits *fds)
+int do_dialated_select(int n, fd_set_bits *fds,struct task_struct * tsk)
 {
 	ktime_t expire, *to = NULL;
 	struct poll_wqueues table;
@@ -658,8 +661,10 @@ int do_dialated_select(int n, fd_set_bits *fds)
 	unsigned long busy_end = 0;
 
 	rcu_read_lock();
-	retval = max_sel_fd(n, fds);
+	retval = max_sel_fd(n, fds,tsk);
 	rcu_read_unlock();
+
+	printk(KERN_INFO "TimeKeeper : Returned from max_Sel_fd");
 
 	if (retval < 0)
 		return retval;

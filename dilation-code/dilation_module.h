@@ -141,7 +141,7 @@ struct select_helper_struct
 	pid_t process_pid;
 	fd_set_bits fds;
 	void *bits;
-	int n;
+	unsigned long n;
 	wait_queue_head_t w_queue;
 	int ret;
 	int done;
