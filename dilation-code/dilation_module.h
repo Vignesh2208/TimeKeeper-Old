@@ -70,6 +70,9 @@
                          sizeof(struct pollfd))
 
 #define POLLFD_PER_PAGE  ((4096-sizeof(struct poll_list)) / sizeof(struct pollfd))
+#define FINISHED 2
+#define GOT_RESULT -1
+
 
 // the callback functions for the TimeKeeper status file
 ssize_t status_read(struct file *pfil, char __user *pBuf, size_t len, loff_t *p_off);
@@ -102,7 +105,7 @@ struct dilation_task_struct
         struct dilation_task_struct *next; // the next dilation_task_struct in the per cpu chain
         struct dilation_task_struct *prev; // the prev dilation_task_struct in the per cpu chain
         struct hrtimer timer; // the hrtimer that will be set to fire some point in the future
-	struct hrtimer schedule_timer; // A timer that is used to change the process at the head of the schedule queue;
+		struct hrtimer schedule_timer; // A timer that is used to change the process at the head of the schedule queue;
 
         short stopped; // a simple flag that gets set if the process dies
         s64 curr_virt_time; // the current virtual time of the corresponding container

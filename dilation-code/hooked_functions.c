@@ -35,6 +35,52 @@ extern int kill(struct task_struct *killTask, int sig, struct dilation_task_stru
 extern int experiment_stopped;
 extern s64 Sim_time_scale;
 
+
+
+extern int do_dialated_poll(unsigned int nfds,  struct poll_list *list, struct poll_wqueues *wait,struct task_struct * tsk);
+extern int do_dialated_select(int n, fd_set_bits *fds,struct task_struct * tsk);
+
+s64 get_dilated_time(struct task_struct * task)
+{
+	s64 temp_past_physical_time;
+	struct timeval tv;
+
+	do_gettimeofday(&tv);
+	s64 now = timeval_to_ns(&tv);
+
+	if(task->virt_start_time != 0){
+		if (task->group_leader != task) { //use virtual time of the leader thread
+                       	task = task->group_leader;
+               	}
+	
+		s32 rem;
+		s64 real_running_time;
+		s64 dilated_running_time;
+		real_running_time = now - task->virt_start_time;
+		if (task->freeze_time != 0)
+			temp_past_physical_time = task->past_physical_time + (now - task->freeze_time);
+		else
+			temp_past_physical_time = task->past_physical_time;
+
+		if (task->dilation_factor > 0) {
+			dilated_running_time = div_s64_rem( (real_running_time - temp_past_physical_time)*1000 ,task->dilation_factor,&rem) + task->past_virtual_time;
+			now = dilated_running_time + task->virt_start_time;
+		}
+		else if (task->dilation_factor < 0) {
+			dilated_running_time = div_s64_rem( (real_running_time - temp_past_physical_time)*(task->dilation_factor*-1),1000,&rem) + task->past_virtual_time;
+			now =  dilated_running_time + task->virt_start_time;
+		}
+		else {
+			dilated_running_time = (real_running_time - temp_past_physical_time) + task->past_virtual_time;
+			now = dilated_running_time + task->virt_start_time;
+		}
+	
+	}
+
+	return now;
+
+}
+
 /*
 Hooks the sleep system call, so the process will wake up when it reaches the experiment virtual time,
 not the system time
@@ -125,22 +171,7 @@ asmlinkage int sys_select_new(int k, fd_set __user *inp, fd_set __user *outp, fd
 	long stack_fds[SELECT_STACK_ALLOC/sizeof(long)];
 	void * bits;
 
-	/*spin_lock(&current->dialation_lock);
-	if(experiment_stopped == RUNNING && current->virt_start_time != NOTSET && tvp != NULL){	
-		spin_unlock(&current->dialation_lock);
-		list_for_each_safe(pos, n, &exp_list){
-	                task = list_entry(pos, struct dilation_task_struct, list);
-			if (find_children_info(task->linux_task, current->pid) == 1) {
-				printk(KERN_INFO "TimeKeeper : Called Dialated Select. PID %d\n",current->pid);
-				return ref_sys_select_dialated(k,inp,outp,exp,tvp);
-			}
-		}		
-	}
-	else
-		spin_unlock(&current->dialation_lock);
-	*/
 	
-
 
 	if(experiment_stopped == RUNNING && current->virt_start_time != NOTSET && tvp != NULL){	
 		//list_for_each_safe(pos, n, &exp_list){
@@ -220,34 +251,63 @@ asmlinkage int sys_select_new(int k, fd_set __user *inp, fd_set __user *outp, fd
 				now = timeval_to_ns(&ktv);
 				
 				spin_lock(&current->dialation_lock);
-                	        real_running_time = now - current->virt_start_time;
+                real_running_time = now - current->virt_start_time;
 				//current->freeze_time = now; // ** Added new
-                        	if (current->dilation_factor > 0) {
-                			dilated_running_time = div_s64_rem( (real_running_time - current->past_physical_time)*1000 ,current->dilation_factor,&rem) + current->past_virtual_time;
-	                                now_new = dilated_running_time + current->virt_start_time;
-        	                }
-                	        else if (current->dilation_factor < 0) {
-		        	        dilated_running_time = div_s64_rem( (real_running_time - current->past_physical_time)*(current->dilation_factor*-1),1000,&rem) + current->past_virtual_time;
-                                	now_new =  dilated_running_time + current->virt_start_time;
-                        	}
-                        	else {
-                                	dilated_running_time = (real_running_time - current->past_physical_time) + current->past_virtual_time;
-	                                now_new = dilated_running_time + current->virt_start_time;
-        	                }
+                if (current->dilation_factor > 0) {
+                	dilated_running_time = div_s64_rem( (real_running_time - current->past_physical_time)*1000 ,current->dilation_factor,&rem) + current->past_virtual_time;
+	                now_new = dilated_running_time + current->virt_start_time;
+        	    }
+                else if (current->dilation_factor < 0) {
+		            dilated_running_time = div_s64_rem( (real_running_time - current->past_physical_time)*(current->dilation_factor*-1),1000,&rem) + current->past_virtual_time;
+                   	now_new =  dilated_running_time + current->virt_start_time;
+                }
+                else {
+                 	dilated_running_time = (real_running_time - current->past_physical_time) + current->past_virtual_time;
+	                now_new = dilated_running_time + current->virt_start_time;
+        	    }
 				current->freeze_time = 0;
-				current->wakeup_time = now_new + ((secs_to_sleep*1000000000) + nsecs_to_sleep)*Sim_time_scale; 
+				s64 wakeup_time;
+				wakeup_time = now_new + ((secs_to_sleep*1000000000) + nsecs_to_sleep)*Sim_time_scale; 
 				printk(KERN_INFO "TimeKeeper : Select Process Waiting %d. Timeout sec %d, nsec %d.",current->pid,secs_to_sleep,nsecs_to_sleep);
-				printk(KERN_INFO "TimeKeeper : Select Process Waiting %d. Curr time %lld, Wakeup time %lld",current->pid,now_new,current->wakeup_time);
-				spin_unlock(&current->dialation_lock);
+				printk(KERN_INFO "TimeKeeper : Select Process Waiting %d. Curr time %lld, Wakeup time %lld",current->pid,now_new,current->wakeup_time);				
 				select_helper->n = k;	
 				printk(KERN_INFO "TimeKeeper : Select nfds = %lu\n",select_helper->n);
-
 				hmap_put(&select_process_lookup, &current->pid, select_helper);
-				wait_event(select_helper->w_queue,select_helper->done == 1);
-				set_current_state(TASK_RUNNING);
+				spin_unlock(&current->dialation_lock);
+
+				while(1){
+
+					now_new = get_dilated_time(current);
+					if(now_new < wakeup_time){
+
+						wait_event(select_helper->w_queue,select_helper->done == 1);
+						set_current_state(TASK_RUNNING);
+						
+						spin_lock(&current->dialation_lock);
+						ret = do_dialated_select(select_helper->n,&select_helper->fds,current);
+						if(ret || select_helper->ret == FINISHED){
+							
+							select_helper->ret = ret;
+							spin_unlock(&current->dialation_lock);
+							break;
+						}
+						select_helper->done = 0;
+						spin_unlock(&current->dialation_lock);
+						
+
+					}
+					else{
+						spin_lock(&current->dialation_lock);
+						select_helper->ret = 0;
+						spin_unlock(&current->dialation_lock);
+						break;
+					}
+
+				}
+				
+				
 				printk(KERN_INFO "TimeKeeper : Resumed Select Process %d\n",current->pid);
 
-				//ret = do_select(n, &fds, end_time);
 				ret = select_helper->ret;
 				memset(&rtv, 0, sizeof(rtv));
 				copy_to_user(tvp, &rtv, sizeof(rtv));
@@ -256,6 +316,10 @@ asmlinkage int sys_select_new(int k, fd_set __user *inp, fd_set __user *outp, fd
 				    set_fd_set(k, outp, select_helper->fds.res_out) ||
 				    set_fd_set(k, exp, select_helper->fds.res_ex))
 					ret = -EFAULT;
+
+				spin_lock(&current->dialation_lock);
+				hmap_remove(&select_process_lookup, &current->pid);
+				spin_unlock(&current->dialation_lock);
 
 			out:
 				kfree(select_helper->bits);
@@ -276,16 +340,16 @@ asmlinkage int sys_select_new(int k, fd_set __user *inp, fd_set __user *outp, fd
 asmlinkage int sys_poll_new(struct pollfd __user * ufds, unsigned int nfds, int timeout_msecs){
 
 	struct list_head *pos;
-        struct list_head *n;
-        struct dilation_task_struct* task;
+    struct list_head *n;
+    struct dilation_task_struct* task;
 	struct dilation_task_struct *dilTask;
-        struct timeval ktv;
+    struct timeval ktv;
 	struct task_struct *current_task;
-        s64 now;
+    s64 now;
 	s64 now_new;
-        s32 rem;
-        s64 real_running_time;
-        s64 dilated_running_time;
+    s32 rem;
+    s64 real_running_time;
+    s64 dilated_running_time;
 	current_task = current;
 	struct timespec end_time, *to = NULL;
 	int ret;
@@ -297,32 +361,13 @@ asmlinkage int sys_poll_new(struct pollfd __user * ufds, unsigned int nfds, int 
 	s64 secs_to_sleep;
 	s64 nsecs_to_sleep;
 
-/*
-	spin_lock(&current->dialation_lock);
-	if(experiment_stopped == RUNNING && current->virt_start_time != NOTSET && timeout_msecs >= 0){	
-		spin_unlock(&current->dialation_lock);
-		list_for_each_safe(pos, n, &exp_list){
-	                task = list_entry(pos, struct dilation_task_struct, list);
-			if (find_children_info(task->linux_task, current->pid) == 1) {
-				printk(KERN_INFO "TimeKeeper : Called Dialated Poll. PID %d\n",current->pid);
-				return ref_sys_poll_dialated(ufds,nfds,timeout_msecs);
-			}
-		}		
-	}
-	else
-		spin_unlock(&current->dialation_lock);
-	
-
-	return ref_sys_poll(ufds,nfds,timeout_msecs);
-*/
-
 	
 	if(experiment_stopped == RUNNING && current->virt_start_time != NOTSET && timeout_msecs >= 0){
 	
 
 		list_for_each_safe(pos, n, &exp_list)
-        	{
-                	task = list_entry(pos, struct dilation_task_struct, list);
+        {
+            task = list_entry(pos, struct dilation_task_struct, list);
 			if (find_children_info(task->linux_task, current->pid) == 1) {
 				printk(KERN_INFO "TimeKeeper : Processing Poll Process %d\n",current->pid);
 				secs_to_sleep = timeout_msecs / MSEC_PER_SEC;
@@ -391,36 +436,68 @@ asmlinkage int sys_poll_new(struct pollfd __user * ufds, unsigned int nfds, int 
 					}
 				}
 				printk(KERN_INFO "TimeKeeper : Poll Process Completed Loop %d",current->pid);	
-				hmap_put(&poll_process_lookup,&current->pid,poll_helper);			
-
 				poll_initwait(poll_helper->table);
 
 				do_gettimeofday(&ktv);
 				now = timeval_to_ns(&ktv);
 				
 				spin_lock(&current->dialation_lock);
-                	        real_running_time = now - current->virt_start_time;
+                real_running_time = now - current->virt_start_time;
 				//current->freeze_time = now; // ** Added new
-                        	if (current->dilation_factor > 0) {
-                			dilated_running_time = div_s64_rem( (real_running_time - current->past_physical_time)*1000 ,current->dilation_factor,&rem) + current->past_virtual_time;
-	                                now_new = dilated_running_time + current->virt_start_time;
-        	                }
-                	        else if (current->dilation_factor < 0) {
-		        	        dilated_running_time = div_s64_rem( (real_running_time - current->past_physical_time)*(current->dilation_factor*-1),1000,&rem) + current->past_virtual_time;
-                                	now_new =  dilated_running_time + current->virt_start_time;
-                        	}
-                        	else {
-                                	dilated_running_time = (real_running_time - current->past_physical_time) + current->past_virtual_time;
-	                                now_new = dilated_running_time + current->virt_start_time;
-        	                }
+                if (current->dilation_factor > 0) {
+                	dilated_running_time = div_s64_rem( (real_running_time - current->past_physical_time)*1000 ,current->dilation_factor,&rem) + current->past_virtual_time;
+	                now_new = dilated_running_time + current->virt_start_time;
+        	    }
+                else if (current->dilation_factor < 0) {
+		            dilated_running_time = div_s64_rem( (real_running_time - current->past_physical_time)*(current->dilation_factor*-1),1000,&rem) + current->past_virtual_time;
+                   	now_new =  dilated_running_time + current->virt_start_time;
+                }
+                else {
+                   	dilated_running_time = (real_running_time - current->past_physical_time) + current->past_virtual_time;
+	                now_new = dilated_running_time + current->virt_start_time;
+        	    }
+
 				current->freeze_time = 0;
-				current->wakeup_time = now_new + ((secs_to_sleep*1000000000) + nsecs_to_sleep)*Sim_time_scale; 
+				//current->wakeup_time = now_new + ((secs_to_sleep*1000000000) + nsecs_to_sleep)*Sim_time_scale; 
+				s64 wakeup_time;
+				wakeup_time = now_new + ((secs_to_sleep*1000000000) + nsecs_to_sleep)*Sim_time_scale; 
+
 				printk(KERN_INFO "TimeKeeper : Poll Process Waiting %d. Timeout sec %d, nsec %d.",current->pid,secs_to_sleep,nsecs_to_sleep);
 				printk(KERN_INFO "TimeKeeper : Poll Process Waiting %d. Curr time %lld, Wakeup time %lld",current->pid,now_new,current->wakeup_time);
+
+				hmap_put(&poll_process_lookup,&current->pid,poll_helper);			
 				spin_unlock(&current->dialation_lock);
+
+				while(1){
+
+					now_new = get_dilated_time(current);
+					if(now_new < wakeup_time){
+
+						wait_event(poll_helper->w_queue,poll_helper->done == 1);
+						set_current_state(TASK_RUNNING);
+						
+						spin_lock(&current->dialation_lock);
+						err = do_dialated_poll(poll_helper->nfds, poll_helper->head,poll_helper->table,current);
+						if(err || poll_helper->err == FINISHED){
+							
+							poll_helper->err = err;
+							spin_unlock(&current->dialation_lock);
+							break;
+						}
+						poll_helper->done = 0;
+						spin_unlock(&current->dialation_lock);
+						
+
+					}
+					else{
+						spin_lock(&current->dialation_lock);
+						poll_helper->err = 0;
+						spin_unlock(&current->dialation_lock);
+						break;
+					}
+
+				}
 				
-				wait_event(poll_helper->w_queue,poll_helper->done == 1);
-				set_current_state(TASK_RUNNING);
 				printk(KERN_INFO "TimeKeeper : Resumed Poll Process %d\n",current->pid);
 				poll_freewait(poll_helper->table);
 	
@@ -444,7 +521,9 @@ asmlinkage int sys_poll_new(struct pollfd __user * ufds, unsigned int nfds, int 
 				}
 				kfree(head);
 				kfree(poll_helper->table);
+				spin_lock(&current->dialation_lock);
 				hmap_remove(&poll_process_lookup, &current->pid);
+				spin_unlock(&current->dialation_lock);
 				kfree(poll_helper);
 				printk(KERN_INFO "TimeKeeper : Poll Process Finished %d",current->pid);
 

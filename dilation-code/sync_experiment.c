@@ -61,7 +61,7 @@ extern struct poll_list {
     int len;
     struct pollfd entries[0];
 };
-extern int do_dialated_poll(unsigned int nfds,  struct poll_list *list, struct poll_wqueues *wait);
+extern int do_dialated_poll(unsigned int nfds,  struct poll_list *list, struct poll_wqueues *wait,struct task_struct * tsk);
 extern int do_dialated_select(int n, fd_set_bits *fds,struct task_struct * tsk);
 
 int proc_num = 0; //the number of containers in the experiment
@@ -1188,10 +1188,10 @@ struct task_struct * search_lxc(struct task_struct * aTask, int pid, int max_no_
 
 
 	struct list_head *list;
-        struct task_struct *taskRecurse;
-        struct dilation_task_struct *dilTask;
-        struct task_struct *me;
-        struct task_struct *t;
+    struct task_struct *taskRecurse;
+    struct dilation_task_struct *dilTask;
+    struct task_struct *me;
+    struct task_struct *t;
 
 	if(max_no_of_recursions >= 100)
 		return NULL;
@@ -1241,27 +1241,28 @@ struct task_struct * search_lxc(struct task_struct * aTask, int pid, int max_no_
 Actually cleans up the experiment by freeing all memory associated with the every container
 ***/
 void clean_exp() {
-        struct list_head *pos;
-        struct list_head *n;
-        struct dilation_task_struct *task;
-        int ret;
+    struct list_head *pos;
+    struct list_head *n;
+    struct dilation_task_struct *task;
+    int ret;
 	int i;
 	struct sched_param sp;
 	struct timeline* curr;
 	struct timeline* tmp;
-        struct timeval now;
-        s64 now_ns;
+    struct timeval now;
+    s64 now_ns;
 
 	printk(KERN_INFO "TimeKeeper: Starting Experiment Cleanup\n");
 	ret = 0;
 	do_gettimeofday(&now);
-        now_ns = timeval_to_ns(&now);
+    now_ns = timeval_to_ns(&now);
 	//free any heap memory associated with each container, cancel corresponding timers
-        list_for_each_safe(pos, n, &exp_list)
-        {
-                task = list_entry(pos, struct dilation_task_struct, list);
+    list_for_each_safe(pos, n, &exp_list)
+    {
+        task = list_entry(pos, struct dilation_task_struct, list);
 		sp.sched_priority = 0;
 		if (experiment_stopped != NOTRUNNING) {
+			
 			resume_all(task->linux_task);				
 			//if (experiment_type == CBE)
             //            	ret = unfreeze_proc_exp_recurse(task, actual_time);
@@ -1630,6 +1631,7 @@ int unfreeze_children(struct task_struct *aTask, s64 time, s64 expected_time) {
     struct task_struct *me;
     struct task_struct *t;
 	struct poll_helper_struct * task_poll_helper;
+	struct select_helper_struct * task_select_helper;
 
         if (aTask == NULL) {
                 printk(KERN_INFO "TimeKeeper: Task does not exist\n");
@@ -1680,28 +1682,15 @@ int unfreeze_children(struct task_struct *aTask, s64 time, s64 expected_time) {
 		spin_lock(&taskRecurse->dialation_lock);
 		if (taskRecurse->wakeup_time != 0 && expected_time > taskRecurse->wakeup_time) {
 			
-			task_poll_helper = hmap_get(&poll_process_lookup,&taskRecurse->pid);
-			if( task_poll_helper == NULL){
-				printk(KERN_INFO "TimeKeeper: PID : %d Time to wake up: %lld actual time: %lld\n", taskRecurse->pid, taskRecurse->wakeup_time, expected_time);
-				taskRecurse->virt_start_time = aTask->virt_start_time;
-        	    taskRecurse->freeze_time = aTask->freeze_time;
-        	    taskRecurse->past_physical_time = aTask->past_physical_time;
-        	    taskRecurse->past_virtual_time = aTask->past_virtual_time;
-				taskRecurse->wakeup_time = 0;
-				spin_unlock(&taskRecurse->dialation_lock);
-        	    kill(taskRecurse, SIGCONT, dilTask);
-			}
-			else{
-
-				task_poll_helper->done = 1;
-				task_poll_helper->err = 0;
-				taskRecurse->wakeup_time = 0;
-				taskRecurse->freeze_time = 0;
-				taskRecurse->past_physical_time = aTask->past_physical_time;
-				taskRecurse->past_virtual_time = aTask->past_virtual_time;
-				wake_up(&task_poll_helper->w_queue);
-				spin_unlock(&taskRecurse->dialation_lock);
-			}
+			printk(KERN_INFO "TimeKeeper: PID : %d Time to wake up: %lld actual time: %lld\n", taskRecurse->pid, taskRecurse->wakeup_time, expected_time);
+			taskRecurse->virt_start_time = aTask->virt_start_time;
+        	taskRecurse->freeze_time = aTask->freeze_time;
+        	taskRecurse->past_physical_time = aTask->past_physical_time;
+        	taskRecurse->past_virtual_time = aTask->past_virtual_time;
+			taskRecurse->wakeup_time = 0;
+			spin_unlock(&taskRecurse->dialation_lock);
+        	kill(taskRecurse, SIGCONT, dilTask);
+			
 		}
 		else if (taskRecurse->wakeup_time != 0 && expected_time < taskRecurse->wakeup_time) {
 			spin_unlock(&taskRecurse->dialation_lock);
@@ -1709,16 +1698,62 @@ int unfreeze_children(struct task_struct *aTask, s64 time, s64 expected_time) {
 		}
         else if (taskRecurse->freeze_time > 0)
         {
+					task_poll_helper = hmap_get(&poll_process_lookup,&taskRecurse->pid);
+					task_select_helper = hmap_get(&select_process_lookup,&taskRecurse->pid);
 					taskRecurse->past_physical_time = taskRecurse->past_physical_time + (time - taskRecurse->freeze_time);
-        	        taskRecurse->freeze_time = 0;
-					spin_unlock(&taskRecurse->dialation_lock);
-                	kill(taskRecurse, SIGCONT, dilTask);
+       	        	taskRecurse->freeze_time = 0;
+					if(task_poll_helper == NULL && task_select_helper == NULL){
+						
+						spin_unlock(&taskRecurse->dialation_lock);
+                		kill(taskRecurse, SIGCONT, dilTask);
+
+                	}
+                	/*
+                	else if(task_poll_helper != NULL){
+
+        	        	task_poll_helper->done = 1;
+        	        	if(task_poll_helper->err != FINISHED)
+							task_poll_helper->err = 0;
+						spin_unlock(&taskRecurse->dialation_lock);
+						wake_up(&task_poll_helper->w_queue);	
+
+                	}
+                	else{
+        	        	task_select_helper->done = 1;
+						if(task_select_helper->ret != FINISHED)        	        	
+							task_select_helper->ret = 0;
+
+						spin_unlock(&taskRecurse->dialation_lock);
+						wake_up(&task_select_helper->w_queue);	
+                	}
+                	*/
         }
 		else {
-	                printk(KERN_INFO "TimeKeeper: Process not frozen pid: %d dilation %d\n", taskRecurse->pid, taskRecurse->dilation_factor);
-					spin_unlock(&taskRecurse->dialation_lock);
-					kill(taskRecurse, SIGCONT, dilTask);		// *** Added
-					return -1;					// *** Added
+					task_poll_helper = hmap_get(&poll_process_lookup,&taskRecurse->pid);
+					task_select_helper = hmap_get(&select_process_lookup,&taskRecurse->pid);
+					if(task_poll_helper == NULL && task_select_helper == NULL){
+	                	printk(KERN_INFO "TimeKeeper: Process not frozen pid: %d dilation %d\n", taskRecurse->pid, taskRecurse->dilation_factor);
+						spin_unlock(&taskRecurse->dialation_lock);
+						kill(taskRecurse, SIGCONT, dilTask);		// *** Added
+					}
+					/*else if(task_poll_helper != NULL){
+
+        	        	task_poll_helper->done = 1;
+        	        	if(task_poll_helper->err != FINISHED)
+							task_poll_helper->err = 0;
+						spin_unlock(&taskRecurse->dialation_lock);
+						wake_up(&task_poll_helper->w_queue);	
+
+                	}
+                	else{
+        	        	task_select_helper->done = 1;
+        	        	if(task_select_helper->ret != FINISHED)
+							task_select_helper->ret = 0;
+
+						spin_unlock(&taskRecurse->dialation_lock);
+						wake_up(&task_select_helper->w_queue);	
+                	}*/
+                	return -1;					// *** Added. no need to unfreeze its children
 		}
         if (unfreeze_children(taskRecurse, time, expected_time) == -1)
 			return 0;
@@ -1751,13 +1786,14 @@ int resume_all(struct task_struct *aTask) {
 	me = aTask;
 	t = me;
 	do {
+
+		spin_lock(&t->dialation_lock);
 		helper = hmap_get(&poll_process_lookup,&t->pid);
 		sel_helper = hmap_get(&select_process_lookup,&t->pid);
 		if(helper != NULL){
-			spin_lock(&t->dialation_lock);
 			t->wakeup_time = 0;
 			t->freeze_time = 0;
-			helper->err = 0;
+			helper->err = FINISHED;
 			helper->done = 1;
 			spin_unlock(&t->dialation_lock);
 			wake_up(&helper->w_queue);
@@ -1765,14 +1801,15 @@ int resume_all(struct task_struct *aTask) {
 		}
 		else if(sel_helper != NULL){
 
-			spin_lock(&t->dialation_lock);
 			t->wakeup_time = 0;
 			t->freeze_time = 0;
-			sel_helper->ret = 0;
+			sel_helper->ret = FINISHED;
 			sel_helper->done = 1;
 			spin_unlock(&t->dialation_lock);
 			wake_up(&sel_helper->w_queue);
 		}
+		else
+			spin_unlock(&t->dialation_lock);
 		
 	} while_each_thread(me, t);
 
@@ -1999,42 +2036,11 @@ lxc_schedule_elem * get_next_valid_task(struct dilation_task_struct * lxc, s64 e
 					return NULL; // for now.
 				}
 
-				// check if the task is currently in the middle of a poll system call
-				task_poll_helper = hmap_get(&poll_process_lookup,&task->pid);
-				
-				if(task_poll_helper != NULL){
-					ret = do_dialated_poll(task_poll_helper->nfds, task_poll_helper->head,task_poll_helper->table);
-					printk(KERN_INFO "TimeKeeper : Dialated Poll Return %d, pid %d. wakeup time : %lld", ret, task->pid, task->wakeup_time);
-					if(ret){
-						task_poll_helper->err = ret;
-						task_poll_helper->done = 1;
-						return head;		// should run now.
-					}
-				}
-
-				task_select_helper = hmap_get(&select_process_lookup,&task->pid);
-				
-				if(task_select_helper != NULL){
-					printk(KERN_INFO "TimeKeeper : Dialated select call : %lu\n",task_select_helper->n);
-					ret = do_dialated_select(task_select_helper->n,&task_select_helper->fds,task);
-					printk(KERN_INFO "TimeKeeper : Dialated Select Return %d, pid %d. wakeup time : %lld", ret, task->pid, task->wakeup_time);
-					if(ret){
-						task_select_helper->ret = ret;
-						task_select_helper->done = 1;
-						return head;		// should run now.
-					}
-				}
-
-
 				requeue_schedule_list(lxc); 		// requeue the task to the tail.
 				head = schedule_list_get_head(lxc);
 			}		
 			else{
 				spin_unlock(&head->curr_task->dialation_lock);
-				if(hmap_get(&poll_process_lookup,&task->pid) != NULL)
-					printk(KERN_INFO "TimeKeeper : Poll Process Timeout expired. pid %d. wakeup-time %lld",task->pid,task->wakeup_time);
-				if(hmap_get(&select_process_lookup,&task->pid) != NULL)
-					printk(KERN_INFO "TimeKeeper : Select Process Timeout expired. pid %d. wakeup-time %lld",task->pid,task->wakeup_time);
 				return head;
 
 			}
@@ -2126,16 +2132,20 @@ Unfreeze process at head of schedule queue of container, run it with possible sw
 int run_schedule_queue_head_process(struct dilation_task_struct * lxc, lxc_schedule_elem * head, s64 remaining_run_time, s64 expected_time){
 
 	struct list_head *list;
-        struct task_struct * curr_task;
-        struct dilation_task_struct *dilTask;
-        struct task_struct *me;
-        struct task_struct *t;
+    struct task_struct * curr_task;
+    struct dilation_task_struct *dilTask;
+    struct task_struct *me;
+    struct task_struct *t;
 	ktime_t ktime;
 	struct timeval ktv;
 	s64 now;
 	s64 timer_fire_time;
 	s64 rem_time;
 	s64 now_ns;
+	struct poll_helper_struct * helper = NULL;
+	struct select_helper_struct * select_helper = NULL;
+	struct poll_helper_struct * task_poll_helper = NULL;
+	struct select_helper_struct * task_select_helper = NULL;
 
 	if(head->duration_left <= 0 || remaining_run_time <= 0){
 		printk(KERN_INFO "TimeKeeper : ERROR Cannot run task. duration left is 0");
@@ -2160,25 +2170,41 @@ int run_schedule_queue_head_process(struct dilation_task_struct * lxc, lxc_sched
 
 
 	curr_task = head->curr_task;
-       	me = curr_task;
+    me = curr_task;
 	t = me;
 
-		spin_lock(&t->dialation_lock);
-      		if (t->freeze_time > 0 && t->wakeup_time == 0)
-       		{	
+	spin_lock(&t->dialation_lock);
+		
+		task_poll_helper = hmap_get(&poll_process_lookup,&t->pid);
+		task_select_helper = hmap_get(&select_process_lookup,&t->pid);
+		if(task_poll_helper != NULL){
+			t->freeze_time = 0;
+			task_poll_helper->done = 1;
+			spin_unlock(&t->dialation_lock);
+			wake_up(&task_poll_helper->w_queue);
+
+		}
+		else if(task_select_helper != NULL){
+			t->freeze_time = 0;
+			task_select_helper->done = 1;
+			spin_unlock(&t->dialation_lock);
+			wake_up(&task_select_helper->w_queue);
+		}
+    	else if (t->freeze_time > 0 && t->wakeup_time == 0)
+       	{	
 
                		if(kill(t, SIGCONT, NULL) < 0){
-				spin_unlock(&t->dialation_lock);
-				return remaining_run_time;
-			}
+						spin_unlock(&t->dialation_lock);
+						return remaining_run_time;
+					}
 			t->freeze_time = 0;
 			spin_unlock(&t->dialation_lock);
 
-               	}
+        }
 		else {
 				if(t->freeze_time <= 0 && t->wakeup_time == 0){
 
-	        		        //printk(KERN_INFO "TimeKeeper: Thread not frozen pid: %d dilation %d\n", t->pid, t->dilation_factor);
+       		        //printk(KERN_INFO "TimeKeeper: Thread not frozen pid: %d dilation %d\n", t->pid, t->dilation_factor);
 					kill(t, SIGCONT, NULL);
 					t->freeze_time = 0;
 					spin_unlock(&t->dialation_lock);
@@ -2186,11 +2212,7 @@ int run_schedule_queue_head_process(struct dilation_task_struct * lxc, lxc_sched
 				else{
 
 					if(t->wakeup_time > expected_time){
-						struct poll_helper_struct * helper = NULL;
-						struct select_helper_struct * select_helper = NULL;
-						helper = hmap_get(&poll_process_lookup,&t->pid);
-						select_helper = hmap_get(&select_process_lookup,&t->pid);
-
+						
 						if(helper == NULL && select_helper == NULL){
 							printk(KERN_INFO "TimeKeeper: Run schedule queue head ERROR. Wakeup time still high\n");
 							spin_unlock(&t->dialation_lock);
@@ -2212,14 +2234,6 @@ int run_schedule_queue_head_process(struct dilation_task_struct * lxc, lxc_sched
 						printk(KERN_INFO "TimeKeeper : Time to Wake poll process %d\n",t->pid);
 						t->freeze_time = 0;
 						t->wakeup_time = 0;
-						if(helper != NULL){
-							helper->done = 1;
-							wake_up(&helper->w_queue);
-						}
-						if(select_helper != NULL){
-							select_helper->done = 1;
-							wake_up(&select_helper->w_queue);
-						}
 
 						spin_unlock(&t->dialation_lock);				
 
@@ -2227,13 +2241,6 @@ int run_schedule_queue_head_process(struct dilation_task_struct * lxc, lxc_sched
 					}
 					else{
 
-						struct poll_helper_struct * task_poll_helper = NULL;
-						struct select_helper_struct * task_select_helper = NULL;
-
-						task_poll_helper = hmap_get(&poll_process_lookup,&t->pid);
-						task_select_helper = hmap_get(&select_process_lookup,&t->pid);
-						
-						
 						// update past physical time and virt start time with the last run process's past physical time and virt start time respectively
 						if(lxc->last_run == NULL || lxc->last_run->curr_task == NULL){
 							t->past_physical_time = 0;
@@ -2246,42 +2253,14 @@ int run_schedule_queue_head_process(struct dilation_task_struct * lxc, lxc_sched
 								t->past_virtual_time = lxc->last_run->curr_task->past_virtual_time;
 	
 						}
+						printk(KERN_INFO "TimeKeeper : Time to Wake up %d\n",t->pid);
+						t->freeze_time = 0;
+						t->wakeup_time = 0;
 
-						if(task_poll_helper != NULL){ // timeout for poll task
-							t->freeze_time = 0;
-							t->wakeup_time = 0;
-							task_poll_helper->err = 0;
-							printk(KERN_INFO "TimeKeeper : Poll Process Timeout %d\n",t->pid);
-							//wake_up_process(t);
-							task_poll_helper->done = 1;
-							wake_up(&task_poll_helper->w_queue);
-						}
-						else{
-
-							if(task_select_helper != NULL){
-
-							t->freeze_time = 0;
-							t->wakeup_time = 0;
-							task_select_helper->ret = 0;
-							printk(KERN_INFO "TimeKeeper : Select Process Timeout %d\n",t->pid);
-							//wake_up_process(t);
-							task_select_helper->done = 1;
-							wake_up(&task_select_helper->w_queue);
-
-							}
-							else{
-
-							printk(KERN_INFO "TimeKeeper : Time to Wake up %d\n",t->pid);
-							t->freeze_time = 0;
-							t->wakeup_time = 0;
-
-							if(kill(t, SIGCONT, NULL) < 0){
-								spin_unlock(&t->dialation_lock);
-								return remaining_run_time;				
-							}
-							}
-							
-						}
+						if(kill(t, SIGCONT, NULL) < 0){
+							spin_unlock(&t->dialation_lock);
+							return remaining_run_time;				
+						}						
 						spin_unlock(&t->dialation_lock);
 			
 					}
@@ -2313,7 +2292,7 @@ int run_schedule_queue_head_process(struct dilation_task_struct * lxc, lxc_sched
 
 	
 	do_gettimeofday(&now);
-        now_ns = timeval_to_ns(&now);
+    now_ns = timeval_to_ns(&now);
 
 	spin_lock(&t->dialation_lock);
 	if (t->wakeup_time > 0 ) {
@@ -2370,7 +2349,7 @@ int unfreeze_proc_exp_recurse(struct dilation_task_struct *aTask, s64 expected_t
 	refresh_lxc_schedule_queue(aTask,aTask->running_time,expected_time); 	// for adding any new tasks that might have been spawned.
 	
 	do_gettimeofday(&now);
-        now_ns = timeval_to_ns(&now);
+    now_ns = timeval_to_ns(&now);
 	start_ns = now_ns;
 
 

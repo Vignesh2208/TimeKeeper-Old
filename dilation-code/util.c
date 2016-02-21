@@ -518,10 +518,9 @@ int schedule_list_size(struct dilation_task_struct * lxc){
 
 }
 
-
 static inline unsigned int do_dialated_pollfd(struct pollfd *pollfd, poll_table *pwait,
 				     bool *can_busy_poll,
-				     unsigned int busy_flag)
+				     unsigned int busy_flag,struct task_struct * tsk)
 {
 	unsigned int mask;
 	int fd;
@@ -551,7 +550,7 @@ static inline unsigned int do_dialated_pollfd(struct pollfd *pollfd, poll_table 
 }
 
 int do_dialated_poll(unsigned int nfds,  struct poll_list *list,
-		   struct poll_wqueues *wait)
+		   struct poll_wqueues *wait,struct task_struct * tsk)
 {
 	poll_table* pt = &wait->pt;
 	int count = 0;
@@ -575,7 +574,7 @@ int do_dialated_poll(unsigned int nfds,  struct poll_list *list,
 			 * when we break out and return.
 			 */
 			if (do_dialated_pollfd(pfd, pt, &can_busy_loop,
-				      busy_flag)) {
+				      busy_flag,tsk)) {
 				count++;
 				pt->_qproc = NULL;
 				/* found something, stop busy polling */
@@ -605,7 +604,7 @@ int max_sel_fd(unsigned long n, fd_set_bits *fds,struct task_struct * tsk)
 	/* handle last in-complete long-word first */
 	set = ~(~0UL << (n & (BITS_PER_LONG-1)));
 	n /= BITS_PER_LONG;
-	fdt = files_fdtable(tsk->files);
+	fdt = files_fdtable(current->files);
 	open_fds = fdt->open_fds + n;
 	printk(KERN_INFO "TimeKeeper : max_sel_fd : n = %lu\n",n);
 
@@ -705,7 +704,7 @@ int do_dialated_select(int n, fd_set_bits *fds,struct task_struct * tsk)
 						     bit, busy_flag);
 					mask = (*f_op->poll)(f.file, wait);
 				}
-				fdput(f);
+				//fdput(f);
 				if ((mask & POLLIN_SET) && (in & bit)) {
 					res_in |= bit;
 					retval++;

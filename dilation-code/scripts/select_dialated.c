@@ -30,6 +30,7 @@ int input_timeout (int filedes, unsigned int seconds)
   /* select returns 0 if timeout, 1 if input available, -1 if error. */
   printf("Calling select_dialated\n");
   return select_dialated(FD_SETSIZE,&set, NULL, NULL,&timeout);
+  //return select_dialated(1,NULL, NULL, NULL,&timeout);
 }
 int main (void)
 {
@@ -45,7 +46,7 @@ int main (void)
   //for(i=0; i<1000000000;i++){
   //}
 
-  usleep(8000000);
+  //usleep(8000000);
   
   gettimeofday(&later, NULL);
   gettimeofdayoriginal(&later1, NULL);
