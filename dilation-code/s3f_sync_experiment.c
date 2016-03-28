@@ -354,12 +354,12 @@ int run_timeline_processes(void * data){
 
 
 			task = tl->head;
-                        task = s3fGetNextRunnableTask(task);
+            task = s3fGetNextRunnableTask(task);
 			if (task == NULL) {
                                 //printk(KERN_INFO "TimeKeeper: Task is null?? No running tasks for timeline %d\n", tl->number);
                                 send_a_message(tl->user_proc->pid);
-                        }
-                        else {
+            }
+            else {
 				int index = tl->cpu_assignment - (TOTAL_CPUS - EXP_CPUS);
 				int isEmpty = 0;
 				int startJob;
@@ -402,7 +402,7 @@ int run_timeline_processes(void * data){
 						if (task != NULL) {  // *** Not sure
 
 							unfreeze_proc_exp_recurse(task, task->expected_time);
-							if (tl->force == FORCE || ( (get_virtual_time(task, now) - task->expected_time) > task->increment) ) { //force the vt to be what you expect
+							if (task->tl->force == FORCE || ( (get_virtual_time(task, now) - task->expected_time) > task->increment) ) { //force the vt to be what you expect
 								force_virtual_time(task->linux_task, task->expected_time);
 							}
 
@@ -412,13 +412,13 @@ int run_timeline_processes(void * data){
 						                if (task->running_time > 0 && task->increment > 0 && task->stopped != -1)
 						                {
 						                        unfreeze_proc_exp_recurse(task, task->expected_time);
-									if (tl->force == FORCE || ( (get_virtual_time(task, now) - task->expected_time) > task->increment) ) { //force the vt to be what you expect
+									if (task->tl->force == FORCE || ( (get_virtual_time(task, now) - task->expected_time) > task->increment) ) { //force the vt to be what you expect
 										force_virtual_time(task->linux_task, task->expected_time);
 									}
 			                        		}
 
 						        }
-							send_a_message(tl->user_proc->pid);
+							send_a_message(task->tl->user_proc->pid);
 		
 						}
 
@@ -442,9 +442,9 @@ int run_timeline_processes(void * data){
 	    round++;
 	    noWork:
 		
-                set_current_state(TASK_INTERRUPTIBLE);
+        set_current_state(TASK_INTERRUPTIBLE);
 		//printk(KERN_INFO "TimeKeeper : Run timeline thread %d, waiting for wake up signal\n",tl->number);
-                schedule(); // Start a new process on this processor. The new process will also belong to tl->head list. So it will have the same cpu assignment.
+        schedule(); // Start a new process on this processor. The new process will also belong to tl->head list. So it will have the same cpu assignment.
 		//printk(KERN_INFO "TimeKeeper : Run timeline thread %d, resumed\n",tl->number);
 	}
 	return 0;
