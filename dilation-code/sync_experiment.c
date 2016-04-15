@@ -1377,19 +1377,18 @@ void set_clean_exp() {
 Set the time dilation variables to be consistent with all children
 ***/
 void set_children_time(struct task_struct *aTask, s64 time) {
-        struct list_head *list;
-        struct task_struct *taskRecurse;
-        struct task_struct *me;
-        struct task_struct *t;
+    struct list_head *list;
+    struct task_struct *taskRecurse;
+    struct task_struct *me;
+    struct task_struct *t;
 
 	if (aTask == NULL) {
                 printk(KERN_INFO "TimeKeeper: Task does not exist\n");
                 return;
-        }
-        if (aTask->pid == 0) {
+    }
+    if (aTask->pid == 0) {
                 return;
-        }
-
+    }
 	me = aTask;
 	t = me;
 	//set if for all threads
@@ -1401,7 +1400,7 @@ void set_children_time(struct task_struct *aTask, s64 time) {
                		t->past_physical_time = 0;
                		t->past_virtual_time = 0;
 			if(experiment_stopped != RUNNING)
-        	       		t->wakeup_time = 0;
+     	       		t->wakeup_time = 0;
 		}
 		spin_unlock(&t->dialation_lock);
 		
@@ -1414,16 +1413,14 @@ void set_children_time(struct task_struct *aTask, s64 time) {
                 if (taskRecurse->pid == 0) {
                         return;
                 }
-		spin_lock(&taskRecurse->dialation_lock);
+				spin_lock(&taskRecurse->dialation_lock);
                 taskRecurse->virt_start_time = time;
                 taskRecurse->freeze_time = time;
                 taskRecurse->past_physical_time = 0;
                 taskRecurse->past_virtual_time = 0;
-		if(experiment_stopped != RUNNING)
+				if(experiment_stopped != RUNNING)
         	        taskRecurse->wakeup_time = 0;
-		spin_unlock(&taskRecurse->dialation_lock);
-
-
+				spin_unlock(&taskRecurse->dialation_lock);
                 set_children_time(taskRecurse, time);
         }
 }
@@ -2078,18 +2075,18 @@ void add_process_to_schedule_queue_recurse(struct dilation_task_struct * lxc, st
     }
 
 
-	spin_lock(&aTask->dialation_lock);
+	//spin_lock(&aTask->dialation_lock);
 	aTask->dilation_factor = lxc->linux_task->dilation_factor;
-	spin_unlock(&aTask->dialation_lock);
+	//spin_unlock(&aTask->dialation_lock);
 	me = aTask;
 	t = me;
 	do {
 
 		if(t->pid != aTask->pid){
-			spin_lock(&t->dialation_lock);
+			//spin_lock(&t->dialation_lock);
 			t->dilation_factor = aTask->dilation_factor;
 			t->static_prio = aTask->static_prio;
-			spin_unlock(&t->dialation_lock);
+			//spin_unlock(&t->dialation_lock);
 
 			add_to_schedule_list(lxc,t,FREEZE_QUANTUM,exp_highest_dilation);
 		}
@@ -2101,10 +2098,10 @@ void add_process_to_schedule_queue_recurse(struct dilation_task_struct * lxc, st
 	list_for_each(list, &aTask->children)
     {
 		taskRecurse = list_entry(list, struct task_struct, sibling);
-                if (taskRecurse->pid == 0) {
+        if (taskRecurse->pid == 0) {
                         continue;
-    }
-	add_process_to_schedule_queue_recurse(lxc,taskRecurse,FREEZE_QUANTUM,exp_highest_dilation);
+    	}
+		add_process_to_schedule_queue_recurse(lxc,taskRecurse,FREEZE_QUANTUM,exp_highest_dilation);
 	}
 
 
