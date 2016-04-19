@@ -475,6 +475,9 @@ asmlinkage int sys_poll_new(struct pollfd __user * ufds, unsigned int nfds, int 
 
 						wait_event(poll_helper->w_queue,poll_helper->done == 1);
 						set_current_state(TASK_RUNNING);
+
+						if(experiment_stopped == NOTRUNNING || experiment_stopped == STOPPING)
+							return -EFAULT;
 						
 						spin_lock(&current->dialation_lock);
 						err = do_dialated_poll(poll_helper->nfds, poll_helper->head,poll_helper->table,current);

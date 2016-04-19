@@ -74,6 +74,7 @@ ssize_t status_write(struct file *file, const char __user *buffer, size_t count,
 	char write_buffer[STATUS_MAXSIZE];
 	unsigned long buffer_size;
 	int i = 0;
+	int ret = 0;
 
  	if(count > STATUS_MAXSIZE)
 	{
@@ -110,8 +111,10 @@ ssize_t status_write(struct file *file, const char __user *buffer, size_t count,
                 leap_proc(write_buffer+2);
 	else if (write_buffer[0] == START_EXP)
 		core_sync_exp();
-	else if (write_buffer[0] == PROGRESS)
-		s3f_progress_timeline(write_buffer+2);
+	else if (write_buffer[0] == PROGRESS){
+		printk(KERN_INFO "TimeKeeper: Received new progress request. Buffer = %s\n", write_buffer + 2);
+		ret = s3f_progress_timeline(write_buffer+2);
+	}
 	else if (write_buffer[0] == ADD_TO_EXP_CS)
 		s3f_add_to_exp_proc(write_buffer+2);
 	else if (write_buffer[0] == RESET)
@@ -137,7 +140,12 @@ ssize_t status_write(struct file *file, const char __user *buffer, size_t count,
 	else
 		printk(KERN_ALERT "Invalid Write Command: %s\n", write_buffer);
 
-	return count;
+	if(ret != 255)
+		return count;
+	else{
+		printk(KERN_INFO "Returned special value\n");
+		return -10;	// special return value when progress timeline thread is not called in s3f_progress_timeline
+	}
 }
 
 /***

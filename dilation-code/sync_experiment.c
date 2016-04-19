@@ -1278,23 +1278,25 @@ void clean_exp() {
 				kill(task->linux_task,SIGCONT,NULL);
 				unfreeze_children(task->linux_task,now_ns,task->expected_time);
 
-			}
-                        if (task->stopped != -1 && ret != -1) {
+				}
+
+                if (task->stopped != -1 && ret != -1) {
                                 sp.sched_priority = 0;
                                 if (sched_setscheduler(task->linux_task, SCHED_NORMAL, &sp) == -1 )
                                         printk(KERN_INFO "TimeKeeper: Error setting policy: %d pid: %d\n", SCHED_NORMAL, task->linux_task->pid);
-                                set_children_policy(task->linux_task, SCHED_NORMAL, 0);
-                        	cpumask_setall(&task->linux_task->cpus_allowed);
-				set_children_cpu(task->linux_task, -1); //-1 to fill cpu mask
-			}
+                                
+                         		set_children_policy(task->linux_task, SCHED_NORMAL, 0);
+                        		cpumask_setall(&task->linux_task->cpus_allowed);
+								set_children_cpu(task->linux_task, -1); //-1 to fill cpu mask
+						}
                 }
-		list_del(pos);
+				list_del(pos);
                 if (&task->timer != NULL)
                 {
                         ret = hrtimer_cancel( &task->timer );
                         if (ret) printk(KERN_INFO "TimeKeeper: The timer was still in use...\n");
                 }
-		clean_up_schedule_list(task);
+				clean_up_schedule_list(task);
 
                 kfree(task);
         }
@@ -1320,7 +1322,12 @@ void clean_exp() {
 				tmp = curr;
 				curr = curr->next; //move to next timeline
 				kthread_stop(tmp->thread);
-				kthread_stop(tmp->run_timeline_thread);
+				//kthread_stop(tmp->run_timeline_thread);
+				atomic_set(&tmp->pthread_done,1);
+				atomic_set(&tmp->stop_thread,1);
+				wake_up_interruptible(&tmp->pthread_queue);				
+				while(atomic_read(&tmp->stop_thread) != 0)
+					;
 				printk(KERN_INFO "TimeKeeper : Stopped all kernel threads for timeline : %d\n",tmp->number);
 				kfree(tmp); // remove prev timeline
 			}
@@ -1361,7 +1368,8 @@ void set_clean_exp() {
 	//assuming stopExperiment will not be called if still waiting for a S3F progress to return
         if (experiment_stopped == NOTRUNNING || experiment_type == CS || experiment_stopped == FROZEN) {
                 //sync experiment was never started, so just clean the list
-		printk(KERN_INFO "TimeKeeper: Clean up immediately..\n");
+				printk(KERN_INFO "TimeKeeper: Clean up immediately..\n");
+				experiment_stopped = STOPPING;
                 clean_exp();
         }
         else if (experiment_stopped == RUNNING) {

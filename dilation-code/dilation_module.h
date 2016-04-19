@@ -154,12 +154,17 @@ struct select_helper_struct
 // CPU, and each timeline can have multiple containers assigned to it. Each timeline must have a unique id ( >= 0)
 struct timeline
 {
-        int number; // the unique timeline id ( >= 0)
-        struct dilation_task_struct* head; // the head of a doubly-linked list that has all the containers associated with the timeline
+    int number; // the unique timeline id ( >= 0)
+    struct dilation_task_struct* head; // the head of a doubly-linked list that has all the containers associated with the timeline
 	spinlock_t tl_lock; 	// timeline lock
-        int cpu_assignment; // the specific CPU this timeline is assigned to
-        struct timeline* next; // points to the next timeline assigned to this cpu
-        struct task_struct* user_proc; // the task_struct to send the 'finished' message to when the timeline has finished advaincing in time
+    int cpu_assignment; // the specific CPU this timeline is assigned to
+    struct timeline* next; // points to the next timeline assigned to this cpu
+    struct task_struct* user_proc; // the task_struct to send the 'finished' message to when the timeline has finished advaincing in time
+  	wait_queue_head_t w_queue;
+  	wait_queue_head_t pthread_queue;
+  	atomic_t stop_thread;
+  	atomic_t done;
+  	atomic_t pthread_done;
 	int force; // a flag to determine if the virtual time should be forced to be exact as the user expects or not
 	struct task_struct* thread; // the kernel thread associated with this timeline
 	struct task_struct* run_timeline_thread; // the kernel thread associated with this timeline
@@ -170,7 +175,7 @@ struct timeline
 #define DILATION_DIR "dilation"
 #define DILATION_FILE "status"
 
-#define EXP_CPUS 2
+#define EXP_CPUS 6
                           // How many processors are dedicated to the experiment. My system has 8, so I set it to 6 so 
                           //background tasks can run on the other 2.
                           // This needs to be >= 2 and your system needs to have at least 4 vCPUs
@@ -222,7 +227,7 @@ extern void set_cbe_exp_timeslice(char *write_buffer);
 // *** s3f_sync_experiment.c
 extern void s3f_add_to_exp_proc(char *write_buffer);
 extern void s3f_set_interval(char *write_buffer);
-extern void s3f_progress_timeline(char *write_buffer);
+extern int s3f_progress_timeline(char *write_buffer);
 extern void s3f_reset(char *write_buffer);
 extern void fix_timeline_proc(char *write_buffer);
 

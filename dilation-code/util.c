@@ -40,6 +40,7 @@ Wrapper for sending a message to userspace
 void send_a_message_proc(char * write_buffer) {
         int pid;
         pid = atoi(write_buffer);
+        printk(KERN_INFO "TimeKeeper : Send a message called from send_a_msg_proc\n");
         send_a_message(pid);
 }
 
@@ -71,7 +72,7 @@ certain point.
 
     res = nlmsg_unicast(nl_sk, skb_out, pid);
     if (res < 0) {
-        printk(KERN_INFO "TimeKeeper: Error while sending bak to user %d\n", res);
+        printk(KERN_INFO "TimeKeeper: Error while sending bak to user %d, pid = %d\n", res, pid);
     }
 }
 
