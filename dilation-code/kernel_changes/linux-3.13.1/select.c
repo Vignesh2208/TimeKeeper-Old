@@ -410,13 +410,14 @@ s64 get_curr_dilated_time_pid(void)
 	do_gettimeofday(&ktv);
 	struct task_struct* task;
 	task = current;
+	unsigned long flags;
 	now = timeval_to_ns(&ktv);	
 	if(task->virt_start_time != 0){
 		if (task->group_leader != task) { //use virtual time of the leader thread
                        	task = task->group_leader;
                	}
 
-		spin_lock(&task->dialation_lock);
+		spin_lock_irqsave(&task->dialation_lock,flags);
 
 		if(task->freeze_time == 0){
 			real_running_time = now - task->virt_start_time;
@@ -449,7 +450,7 @@ s64 get_curr_dilated_time_pid(void)
 			task->past_virtual_time = dilated_running_time;
 		}
 
-		spin_unlock(&task->dialation_lock);
+		spin_unlock_irqrestore(&task->dialation_lock,flags);
 	
 	}
 	return now;	
@@ -489,8 +490,8 @@ int do_select(int n, fd_set_bits *fds, struct timespec *end_time)
 {
 	s64 secs_to_sleep;
 	s64 nsecs_to_sleep;
-	s64 curr_dilated_time;
-	s64 timeout_time;
+	s64 curr_dilated_time = 0;
+	s64 timeout_time = 0;
 	struct timespec sleep_time;
 	ktime_t expire, *to = NULL;
 	struct poll_wqueues table;
@@ -500,6 +501,7 @@ int do_select(int n, fd_set_bits *fds, struct timespec *end_time)
 	unsigned int busy_flag = net_busy_loop_on() ? POLL_BUSY_LOOP : 0;
 	unsigned long busy_end = 0;
 	int is_dilated = 0;
+	unsigned long flags;
 
 
 
@@ -524,25 +526,30 @@ int do_select(int n, fd_set_bits *fds, struct timespec *end_time)
 	if (end_time && !timed_out)
 		slack = select_estimate_accuracy(end_time);
 	
-	spin_lock(&current->dialation_lock);
+	spin_lock_irqsave(&current->dialation_lock,flags);
 	if(current->virt_start_time != 0 && end_time != NULL){
-		spin_unlock(&current->dialation_lock);
+		spin_unlock_irqrestore(&current->dialation_lock,flags);
 
 		is_dilated = 1;
 		secs_to_sleep = (unsigned int) end_time->tv_sec;
 		nsecs_to_sleep = end_time->tv_nsec;
-		curr_dilated_time = get_curr_dilated_time_pid();
-		timeout_time = curr_dilated_time + ((secs_to_sleep*1000000000) + nsecs_to_sleep);
+		
 		if(secs_to_sleep == 0 && nsecs_to_sleep == 0){
 			wait->_qproc = NULL;
 			timed_out = 1;
 		}
-		spin_lock(&current->dialation_lock);
-		printk(KERN_INFO "Select@@@@@@@@@@@@@@@@@@ Initialized start time : %lld, timeout time to %lld. PID %d ", curr_dilated_time, timeout_time,current->pid);
-		printk(KERN_INFO "Select@@@@@@@@@@@@@@@@@@ Initialized secs_to_sleep %d, nsecs_To_sleep %d. Dialation factor : %d, PID %d ", secs_to_sleep,nsecs_to_sleep,current->dilation_factor, current->pid);
+		else{
+			curr_dilated_time = get_curr_dilated_time_pid();
+			timeout_time = curr_dilated_time + ((secs_to_sleep*1000000000) + nsecs_to_sleep);
+
+		}
+		//spin_lock_irqsave(&current->dialation_lock,flags);
+		//printk(KERN_INFO "Select@@@@@@@@@@@@@@@@@@ Initialized start time : %lld, timeout time to %lld. PID %d ", curr_dilated_time, timeout_time,current->pid);
+		//printk(KERN_INFO "Select@@@@@@@@@@@@@@@@@@ Initialized secs_to_sleep %d, nsecs_To_sleep %d. Dialation factor : %d, PID %d ", secs_to_sleep,nsecs_to_sleep,current->dilation_factor, current->pid);
 
 	}
-	spin_unlock(&current->dialation_lock);
+	else
+		spin_unlock_irqrestore(&current->dialation_lock,flags);
 
 	retval = 0;
 	for (;;) {
@@ -797,15 +804,16 @@ SYSCALL_DEFINE5(select, int, n, fd_set __user *, inp, fd_set __user *, outp,
 	struct timeval tv;
 	struct timeval rtv;
 	int ret;
+	unsigned long flags;
 
 	if (tvp) {
 		if (copy_from_user(&tv, tvp, sizeof(tv)))
 			return -EFAULT;
 
 		to = &end_time;
-		spin_lock(&current->dialation_lock);
+		spin_lock_irqsave(&current->dialation_lock,flags);
 		if(current->virt_start_time == 0){
-			spin_unlock(&current->dialation_lock);
+			spin_unlock_irqrestore(&current->dialation_lock,flags);
 			if (poll_select_set_timeout(to,
 					tv.tv_sec + (tv.tv_usec / USEC_PER_SEC),
 					(tv.tv_usec % USEC_PER_SEC) * NSEC_PER_USEC))
@@ -814,7 +822,7 @@ SYSCALL_DEFINE5(select, int, n, fd_set __user *, inp, fd_set __user *, outp,
 
 		}
 		else{
-			spin_unlock(&current->dialation_lock);
+			spin_unlock_irqrestore(&current->dialation_lock,flags);
 
 			end_time.tv_sec = tv.tv_sec + (tv.tv_usec / USEC_PER_SEC);
 			end_time.tv_nsec = (tv.tv_usec % USEC_PER_SEC) * NSEC_PER_USEC;

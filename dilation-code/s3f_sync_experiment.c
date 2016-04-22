@@ -118,6 +118,7 @@ int s3f_progress_timeline(char *write_buffer) {
 	struct timeline* tl;
 	struct task_struct* task;
 	struct timeval ktv;
+	int ret = 0;
 	s64 now;
 	struct dilation_task_struct * lxc = NULL;
 	timeline = atoi(write_buffer);
@@ -142,11 +143,15 @@ int s3f_progress_timeline(char *write_buffer) {
 			do_gettimeofday(&ktv);
             now = timeval_to_ns(&ktv);
 			lxc = tl->head;
+			ret = 0;
             while (lxc != NULL) {
               	if (lxc->increment > 0) {
                     lxc->expected_time += lxc->increment;
                     //task->expected_time =  get_virtual_time(task, now) + task->increment;
                     calculate_virtual_time_difference(lxc,now,lxc->expected_time);            	    
+                }
+                if (lxc->running_time > 1000000 || lxc->running_time < 10000 ) {
+						printk(KERN_INFO "TimeKeeper: On timeline %d, LXC: %d should run for %lld if %lld is > 0\n",tl->number, lxc->linux_task->pid, lxc->running_time, lxc->increment);
                 }
                 lxc = lxc->next;
             }
@@ -157,13 +162,28 @@ int s3f_progress_timeline(char *write_buffer) {
 				return 255;
 			}
 			else{
+				ret = 0;
 
 				atomic_set(&tl->done,0);
+				atomic_set(&tl->progress_thread_done,1);
 				//tl->done = 0;
 				printk(KERN_INFO "TimeKeeper: For timeline %d, waking up progress timeline thread\n", timeline);
+				//set_current_state(TASK_INTERRUPTIBLE); // *** Modified
 				set_current_state(TASK_INTERRUPTIBLE);
-				wake_up_process(tl->thread);
-				wait_event_interruptible(tl->w_queue,atomic_read(&tl->done) == 1);
+				//wake_up_process(tl->thread); // *** Modified
+				wake_up_interruptible_sync(&tl->progress_thread_queue);
+				do{
+				
+				//wait_event_interruptible(tl->w_queue,atomic_read(&tl->done) == 1);
+					ret = wait_event_interruptible_timeout(tl->w_queue,atomic_dec_and_test(&tl->done),HZ);
+					if(ret == 0)
+						set_current_state(TASK_INTERRUPTIBLE);
+					else
+						set_current_state(TASK_RUNNING);
+
+				}while(ret == 0);
+				//wait_event(tl->w_queue,atomic_read(&tl->done) == 1);
+				printk(KERN_INFO "TimeKeeper: For timeline %d, Resumed user process\n", timeline);
 
 			}
 			return 0;
@@ -337,6 +357,8 @@ void s3f_add_to_exp(int pid, int timeline) {
 	//see if the timeline exists yet, if not, add it
 	targetTimeline = doesTimelineExist(timeline);
 	if (targetTimeline == NULL) {
+		struct sched_param sp;
+		
 		printk(KERN_INFO "TimeKeeper: Timeline %d does not exist, creating it\n", timeline);
 	    targetTimeline = (struct timeline *)kmalloc(sizeof(struct timeline), GFP_KERNEL);
 		targetTimeline->number = timeline;
@@ -344,15 +366,27 @@ void s3f_add_to_exp(int pid, int timeline) {
 		targetTimeline->head = NULL;
 		targetTimeline->user_proc = NULL;
 		spin_lock_init(&targetTimeline->tl_lock);
-		targetTimeline->thread = kthread_run(&progress_timeline_thread, targetTimeline, "worker");
-		targetTimeline->run_timeline_thread = kthread_run(&run_timeline_processes, targetTimeline, "workertimeline");
 		//targetTimeline->done = 0;
 		atomic_set(&targetTimeline->done,0);
 		init_waitqueue_head(&targetTimeline->w_queue);
 		atomic_set(&targetTimeline->pthread_done,0);
+		atomic_set(&targetTimeline->progress_thread_done,0);
 		atomic_set(&targetTimeline->stop_thread,0);
+		atomic_set(&targetTimeline->hrtimer_done,0);
 		init_waitqueue_head(&targetTimeline->pthread_queue);
+		init_waitqueue_head(&targetTimeline->unfreeze_proc_queue);
+		init_waitqueue_head(&targetTimeline->progress_thread_queue);
+		targetTimeline->thread = kthread_run(&progress_timeline_thread, targetTimeline, "worker");
+		sp.sched_priority = 99; //some RT priority
+		//if(targetTimeline->thread != NULL)
+        //	sched_setscheduler(targetTimeline->thread, SCHED_RR, &sp);
+		targetTimeline->run_timeline_thread = kthread_run(&run_timeline_processes, targetTimeline, "workertimeline");
+
+		//if(targetTimeline->run_timeline_thread != NULL)
+		//	sched_setscheduler(targetTimeline->run_timeline_thread, SCHED_RR, &sp);
+
 		number_of_heads++;
+
 		if (number_of_heads > EXP_CPUS)
         	       	number_of_heads = EXP_CPUS;
 		assign_timeline_to_cpu(targetTimeline);
@@ -392,9 +426,10 @@ int run_timeline_processes(void * data){
 	    if (tl != NULL) 
 	    {
 
-	    	if(atomic_read(&tl->stop_thread) == 1){
+	    	if(atomic_read(&tl->stop_thread) > 0){
 	    		printk(KERN_INFO "TimeKeeper: Stopped timeline thread %d\n", tl->number);
-	    		atomic_set(&tl->stop_thread, 0);
+	    		if(atomic_dec_and_test(&tl->stop_thread))
+	    			kfree(tl);
 	    		return 0;
 	    	}
 			int index = tl->cpu_assignment - (TOTAL_CPUS - EXP_CPUS);
@@ -410,8 +445,9 @@ int run_timeline_processes(void * data){
             }
             else {
 				
-				
+				printk(KERN_INFO "TimeKeeper: Starting unfreeze_proc for %d, on timeline %d\n", task->linux_task->pid, tl->number);
 				unfreeze_proc_exp_recurse(task, task->expected_time);
+				printk(KERN_INFO "TimeKeeper: Finished unfreeze_proc for %d, on timeline %d\n", task->linux_task->pid, tl->number);
 
 				if (tl->force == FORCE || ( (get_virtual_time(task, now) - task->expected_time) > task->increment) ) { //force the vt to be what you expect
 					force_virtual_time(task->linux_task, task->expected_time);
@@ -423,7 +459,9 @@ int run_timeline_processes(void * data){
 			        	task = task->next;
 			                if (task->running_time > 0 && task->increment > 0 && task->stopped != -1)
 			                {
+				                	printk(KERN_INFO "TimeKeeper: Starting unfreeze_proc for %d, on timeline %d\n", task->linux_task->pid, tl->number);
 			                        unfreeze_proc_exp_recurse(task, task->expected_time);
+			                        printk(KERN_INFO "TimeKeeper: Finished unfreeze_proc for %d, on timeline %d\n", task->linux_task->pid, tl->number);
 					       			//startJob = 1;
 									if (tl->force == FORCE || ( (get_virtual_time(task, now) - task->expected_time) > task->increment) ) { //force the vt to be what you expect
 										force_virtual_time(task->linux_task, task->expected_time);
@@ -462,69 +500,7 @@ int run_timeline_processes(void * data){
 					
 					
 					set_current_state(TASK_INTERRUPTIBLE);
-					//wake_up_process(task->tl->run_timeline_thread);
-
-
-					//spin_unlock(&cpuLock[index]);
-
-					/*
-					if(task == NULL){
-						printk(KERN_INFO "TimeKeeper: Dequeued task is null\n");
-					}
-
-					ntl = task->tl;
-					printk(KERN_INFO "TimeKeeper: Dequeued task user proc pid : %d\n", ntl->user_proc->pid);
-					//task = ntl->head;
-        			//task = s3fGetNextRunnableTask(task);
-
-        			printk(KERN_INFO "TimeKeeper: Got next runnable task: pid %d\n", task->linux_task->pid);
-
-					if (task != NULL) {  // *** Not sure							
-
-						printk(KERN_INFO "TimeKeeper: Running next runnable task: pid %d\n", task->linux_task->pid);
-
-						unfreeze_proc_exp_recurse(task, task->expected_time);
-
-						printk(KERN_INFO "TimeKeeper: Ran next runnable task: pid %d\n", task->linux_task->pid);
-
-						if (ntl->force == FORCE || ( (get_virtual_time(task, now) - task->expected_time) > task->increment) ) { //force the vt to be what you expect
-							force_virtual_time(task->linux_task, task->expected_time);
-						}
-
-						while (task->next != NULL)
-					    {
-					    		printk(KERN_INFO "TimeKeeper: Running next lxc timeline : cpu index : %d, pid %d\n", index, task->linux_task->pid);
-					        	task = task->next;
-				                if (task->running_time > 0 && task->increment > 0 && task->stopped != -1)
-				                {
-			                        unfreeze_proc_exp_recurse(task, task->expected_time);
-
-			                        printk(KERN_INFO "TimeKeeper: Ran next lxc timeline : cpu index : %d, pid %d\n", index, task->linux_task->pid);
-									if (ntl->force == FORCE || ( (get_virtual_time(task, now) - task->expected_time) > task->increment) ) { //force the vt to be what you expect
-										force_virtual_time(task->linux_task, task->expected_time);
-									}
-		                   		}
-
-					    }
-					    printk(KERN_INFO "TimeKeeper: Ran all tasks : cpu index : %d\n", index);
-					    send_a_message(ntl->user_proc->pid);				
-					    printk(KERN_INFO "TimeKeeper: Sent user message to : %d\n", ntl->user_proc->pid);
-					    
-	
-					}
-					else{
-						printk(KERN_INFO "TimeKeeper: Queued next task is null ? sending user message : cpu index : %d, pid : %d\n", index, ntl->user_proc->pid);
-						send_a_message(ntl->user_proc->pid);				
-					    printk(KERN_INFO "TimeKeeper: Queued next task is null ? sent user message : cpu index : %d. pid : %d\n", index, ntl->user_proc->pid);
-
-					}
-
 					
-					
-
-					spin_lock(&cpuLock[index]);
-					list_del((&cpuWorkList[index])->next); // *** Not sure. I think this moves on to the queued progress of the next timeline on the same cpu chain. This way the timelines on the same cpu chain are advanced one after the other.
-					*/
 				}
 				else{
 					set_current_state(TASK_INTERRUPTIBLE);				
@@ -533,11 +509,15 @@ int run_timeline_processes(void * data){
 
 				printk(KERN_INFO "TimeKeeper : Send a message called from run timeline processes for timeline %d\n",tl->number);
 				//send_a_message(tl->user_proc->pid); // ** modified
-				//tl->done = 1;
-				atomic_set(&tl->done,1);
-				wake_up_interruptible(&tl->w_queue);
-				printk(KERN_INFO "TimeKeeper : Sent msg to user proc for timeline %d\n",tl->number);
+				//tl->done = 1;				
 				spin_unlock(&cpuLock[index]);
+				atomic_set(&tl->done,1);
+				wake_up_interruptible_sync(&tl->w_queue);
+				//kill(tl->user_proc, SIGCONT, NULL);
+				//wake_up(&tl->w_queue);
+				printk(KERN_INFO "TimeKeeper : Sent msg to user proc for timeline %d\n",tl->number);
+
+				
 				
 			}			
 
@@ -557,7 +537,8 @@ int run_timeline_processes(void * data){
 
 				// wake_up_process(ntl->run_timeline_thread); //*** modified
 				atomic_set(&ntl->pthread_done,1);
-				wake_up_interruptible(&ntl->pthread_queue);
+				wake_up_interruptible_sync(&ntl->pthread_queue);
+				//printk(KERN_INFO "TimeKeeper : Finished timeline thread for timeline %d. wake up sent to user proc\n",tl->number);
 
         	}
         	
@@ -593,8 +574,8 @@ int progress_timeline_thread(void *data)
 	struct dilation_task_struct* task;
 	s64 now;
 	ktime_t ktime;
-        int round = 0;
-        int send_message = 0;
+    int round = 0;
+    int send_message = 0;
 	struct timeline* tl = (struct timeline *)data;
 	if (round == 0) {
 		goto noWork;
@@ -603,7 +584,14 @@ int progress_timeline_thread(void *data)
         while (!kthread_should_stop())
         {
         	send_message = 0;
-		if (tl != NULL) {
+			if (tl != NULL) {
+
+			if(atomic_read(&tl->stop_thread) > 0){
+	    		printk(KERN_INFO "TimeKeeper: Stopped progress timeline thread %d\n", tl->number);
+	    		if(atomic_dec_and_test(&tl->stop_thread))
+	    			kfree(tl);
+	    		return 0;
+	    	}
 
 			printk(KERN_INFO "TimeKeeper : Resumed progress timeline thread for timeline %d\n",tl->number);
 
@@ -633,24 +621,7 @@ int progress_timeline_thread(void *data)
                 printk(KERN_INFO "TimeKeeper : Send a message called from progress timeline thread for timeline %d\n",tl->number);
                 send_message = 1;
                 //send_a_message(tl->user_proc->pid);
-                /*int index = tl->cpu_assignment - (TOTAL_CPUS - EXP_CPUS);
-                preempt_disable();
-				local_irq_disable();
-				spin_lock(&cpuLock[index]);
-
-				if(!list_empty(&cpuWorkList[index])){
-					spin_unlock(&cpuLock[index]);
-					local_irq_enable();
-					preempt_enable();
-					set_current_state(TASK_INTERRUPTIBLE);
-                	wake_up_process(tl->run_timeline_thread); // incase there is some queued job					
-				}
-				else{
-					spin_unlock(&cpuLock[index]);
-					local_irq_enable();
-					preempt_enable();
-				}*/
-
+               
             }
             else {
             	task->tl->user_proc->pid = tl->user_proc->pid;
@@ -698,15 +669,15 @@ int progress_timeline_thread(void *data)
 					set_current_state(TASK_INTERRUPTIBLE);
 					//wake_up_process(tl->run_timeline_thread); // *** modified
 					atomic_set(&tl->pthread_done,1);
-					wake_up_interruptible(&tl->pthread_queue);
+					wake_up_interruptible_sync(&tl->pthread_queue);
 				}
             }
 			round++;
-		}
-		else {
-			printk(KERN_INFO "TimeKeeper: BIG BUG, the timeline in the timeline thread should never be null...\n");
-		}
-		noWork:
+			}
+			else {
+				printk(KERN_INFO "TimeKeeper: BIG BUG, the timeline in the timeline thread should never be null...\n");
+			}
+			noWork:
                 set_current_state(TASK_INTERRUPTIBLE);
                 printk(KERN_INFO "TimeKeeper : Finished progress timeline thread for timeline %d\n",tl->number);
 				if(send_message){
@@ -714,10 +685,18 @@ int progress_timeline_thread(void *data)
 						////send_a_message(tl->user_proc->pid); // ** modified
 						//tl->done = 1;
 						atomic_set(&tl->done,1);
-						wake_up_interruptible(&tl->w_queue);
+						wake_up_interruptible_sync(&tl->w_queue);
+						//kill(tl->user_proc, SIGCONT, NULL);
+						//wake_up(&tl->w_queue);
 					}
 				}
-                schedule(); // Start a new process on this processor. The new process will also belong to tl->head list. So it will have the same cpu assignment.
+				
+				wait_event_interruptible(tl->progress_thread_queue,atomic_read(&tl->progress_thread_done) == 1);
+				//if(atomic_read(&tl->progress_thread_done) != 1)
+				//	schedule();
+
+				atomic_set(&tl->progress_thread_done,0);
+                 // *** Modified // Start a new process on this processor. The new process will also belong to tl->head list. So it will have the same cpu assignment.
 		//printk(KERN_INFO "TimeKeeper : progress timeline thread timeline %d woken up by new progress call\n", tl->number);
 	}
 	return 0;
@@ -778,67 +757,13 @@ enum hrtimer_restart s3f_hrtimer_callback( struct hrtimer *timer )
 	}
 
 	//printk(KERN_INFO "TimeKeeper : Waking up run timeline thread %d\n",tl->number);
-	wake_up_process(tl->run_timeline_thread);
+	atomic_set(&tl->hrtimer_done,1);
+	wake_up_interruptible_sync(&tl->unfreeze_proc_queue);
+	//wake_up_process(tl->run_timeline_thread); // ** Modified
+
 	//if the process is done, dont bother freezing it, just set flag so it gets cleaned in sync phase
 
-	/*
-
-	if (callingtask->stopped == -1) {
-		//stopped_change = 1;
-        }
-	else { //its not done, so freeze
-		task->stopped = 1;
-		if (freeze_proc_exp_recurse(task) == -1) {
-				printk(KERN_INFO "TimeKeeper: Trying to freeze the task fails, exiting.. \n");
-                        	return HRTIMER_NORESTART;
-		}
-//		if (tl->force == FORCE || is_off(task) == 1 ) { //force the vt to be what you expect
-		if (tl->force == FORCE || ( (get_virtual_time(task, now) - task->expected_time) > task->increment) ) { //force the vt to be what you expect
-			force_virtual_time(task->linux_task, task->expected_time);
-		}
-	}
-
-	startJob = 0;
-	//find next task that has needs to run this round, then unfreeze it and start it's timer
-        while (task->next != NULL)
-        {
-        	task = task->next;
-                if (task->running_time > 0 && task->increment > 0 && task->stopped != -1)
-                {
-                        unfreeze_proc_exp_recurse(task, task->expected_time);
-                        ktime = ktime_set( 0, task->running_time );
-                        hrtimer_start( &task->timer, ktime, HRTIMER_MODE_REL );
-                        startJob = 1;
-                        break;
-                }
-        }
-	//if no more tasks need to run, send a message to userspace letting them know
-        if (startJob == 0)
-        {
-		int index = tl->cpu_assignment - (TOTAL_CPUS - EXP_CPUS);
-		//see if there is more work to do
-		int isSet = 0;
-		spin_lock(&cpuLock[index]);
-		if (list_empty(&cpuWorkList[index])) {
-			cpuIdle[index] = 0;
-		}
-		else {
-			task = list_first_entry(&cpuWorkList[index], struct dilation_task_struct, cpuList);
-			list_del((&cpuWorkList[index])->next); // *** Not sure. I think this moves on to the queued progress of the next timeline on the same cpu chain. This way the timelines on the same cpu chain are advanced one after the other.
-			isSet = 1;
-		}
-		spin_unlock(&cpuLock[index]);
-		if (task != NULL && isSet == 1) {  // *** Not sure
-			unfreeze_proc_exp_recurse(task, task->expected_time);
-      	                ktime = ktime_set( 0, task->running_time );
-                        hrtimer_start( &task->timer, ktime, HRTIMER_MODE_REL );
-		}
-
-		send_a_message(tl->user_proc->pid);
-	}
-
-	*/
-        return HRTIMER_NORESTART;
+    return HRTIMER_NORESTART;
 }
 
 // Forces the virtual time of a task. This is a user specified option
@@ -898,7 +823,7 @@ void fix_timeline_proc(char *write_buffer) {
 // Will get called if the virtual time of a timeline gets way out of whack, will try to fix it
 void fix_timeline(int timeline) {
 	struct timeline* tl = doesTimelineExist(timeline);
-        struct dilation_task_struct* tmp;
+    struct dilation_task_struct* tmp;
 
 	if (tl != NULL) {
 	        tmp = tl->head;
@@ -906,7 +831,7 @@ void fix_timeline(int timeline) {
                 	printk("No tasks assigned to timeline %d\n", timeline);
                 	return;
         	}
-		printk(KERN_INFO "TimeKeeper: Calling Fix timeline\n");
+			printk(KERN_INFO "TimeKeeper: Calling Fix timeline\n");
 	        while (tmp != NULL) {
 			force_virtual_time(tmp->linux_task, tmp->expected_time);
         	        tmp = tmp->next;

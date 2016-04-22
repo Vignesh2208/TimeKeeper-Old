@@ -262,8 +262,9 @@ void sync_and_freeze() {
 	for (j = 0; j < number_of_heads; j++) {
         values[j] = j;
 	}
-        //sp.sched_priority = 99;
-	sp.sched_priority = 1;
+    
+    sp.sched_priority = 99;
+	//sp.sched_priority = 1;
 
 	//Create the threads for parallel computing
 	for (i = 0; i < number_of_heads; i++)
@@ -284,27 +285,27 @@ void sync_and_freeze() {
 		list_for_each_safe(pos, n, &exp_list)
         	{
         		list_node = list_entry(pos, struct dilation_task_struct, list);
-			if (list_node->linux_task->dilation_factor > exp_highest_dilation) {
+				if (list_node->linux_task->dilation_factor > exp_highest_dilation) {
                        		leader_task = list_node;
                         	exp_highest_dilation = list_node->linux_task->dilation_factor;
-                	}
+               	}
 		}
 	}
 
-        calcExpectedIncrease(); //calculate how far virtual time should advance every round
+    calcExpectedIncrease(); //calculate how far virtual time should advance every round
 
-        do_gettimeofday(&now_timeval);
-        now = timeval_to_ns(&now_timeval);
-        actual_time = now;
+    do_gettimeofday(&now_timeval);
+    now = timeval_to_ns(&now_timeval);
+    actual_time = now;
 	printk(KERN_INFO "TimeKeeper: Setting all tasks to be: %lld\n", actual_time);
-        //for every container in the experiment, set the virtual_start_time (so it starts at the same time), calculate
+    //for every container in the experiment, set the virtual_start_time (so it starts at the same time), calculate
 	//how long each task should be allowed to run in each round, and freeze the container
 	list_for_each_safe(pos, n, &exp_list)
-        {
-                list_node = list_entry(pos, struct dilation_task_struct, list);
-                if (experiment_type == CBE)
+    {
+        list_node = list_entry(pos, struct dilation_task_struct, list);
+        if (experiment_type == CBE)
 			calcTaskRuntime(list_node);
-                list_node->linux_task->virt_start_time = now; //consistent time
+        list_node->linux_task->virt_start_time = now; //consistent time
 		if (experiment_type == CS) {
 			list_node->expected_time = now;
 			list_node->running_time = 0;
@@ -312,34 +313,34 @@ void sync_and_freeze() {
 
 		spin_lock(&list_node->linux_task->dialation_lock);
 		
-                list_node->linux_task->past_physical_time = 0;
-                list_node->linux_task->past_virtual_time = 0;
-                list_node->linux_task->wakeup_time = 0;
+        list_node->linux_task->past_physical_time = 0;
+        list_node->linux_task->past_virtual_time = 0;
+        list_node->linux_task->wakeup_time = 0;
 
 		spin_unlock(&list_node->linux_task->dialation_lock);
 
 		freeze_proc_exp_recurse(list_node); //freeze all children
 
 		spin_lock(&list_node->linux_task->dialation_lock);
-                list_node->linux_task->freeze_time = now;
+        list_node->linux_task->freeze_time = now;
 		spin_unlock(&list_node->linux_task->dialation_lock);
 
 		//set priority and scheduling policy
-                if (list_node->stopped == -1) {
-                        printk(KERN_INFO "TimeKeeper: One of the LXCs no longer exist.. exiting experiment\n");
-                        clean_exp();
-                        return;
-                }
+        if (list_node->stopped == -1) {
+            printk(KERN_INFO "TimeKeeper: One of the LXCs no longer exist.. exiting experiment\n");
+            clean_exp();
+            return;
+        }
 
-        	if (sched_setscheduler(list_node->linux_task, SCHED_RR, &sp) == -1 )
-                	printk(KERN_INFO "TimeKeeper: Error setting SCHED_RR %d\n",list_node->linux_task->pid);
-                set_children_time(list_node->linux_task, now);
+       	if (sched_setscheduler(list_node->linux_task, SCHED_RR, &sp) == -1 )
+           	printk(KERN_INFO "TimeKeeper: Error setting SCHED_RR %d\n",list_node->linux_task->pid);
+        set_children_time(list_node->linux_task, now);
 		set_children_policy(list_node->linux_task, SCHED_RR, 99);
 
 		if (experiment_type == CS) {
 			//printk(KERN_INFO "TimeKeeper: cpus allowed! : %d \n", list_node->linux_task->cpus_allowed);
-     			bitmap_zero((&list_node->linux_task->cpus_allowed)->bits, 8);
-		        cpumask_set_cpu(list_node->cpu_assignment, &list_node->linux_task->cpus_allowed);
+     		bitmap_zero((&list_node->linux_task->cpus_allowed)->bits, 8);
+	        cpumask_set_cpu(list_node->cpu_assignment, &list_node->linux_task->cpus_allowed);
 			set_children_cpu(list_node->linux_task, list_node->cpu_assignment);
 		}
 
@@ -389,9 +390,9 @@ void sync_and_freeze() {
 Specifies the start of the experiment (if in CBE mode)
 ***/
 void core_sync_exp() {
-        struct dilation_task_struct* list_node;
+    struct dilation_task_struct* list_node;
 	int i;
-        ktime_t ktime;
+    ktime_t ktime;
 
 	if (experiment_type == CS) {
 		printk(KERN_INFO "TimeKeeper: Trying to start wrong type of experiment.. exiting\n");
@@ -402,12 +403,12 @@ void core_sync_exp() {
 		return;
 	}
 	//for every 'head' container, unfreeze it and set its timer to fire at some point in the future (based off running_time)
-        for (i=0; i<number_of_heads; i++)
-        {
-                list_node = chainhead[i];
-             	freeze_proc_exp_recurse(list_node);
+    for (i=0; i<number_of_heads; i++)
+    {
+            list_node = chainhead[i];
+         	freeze_proc_exp_recurse(list_node);
 
-        }
+    }
 
 	printk(KERN_INFO "TimeKeeper : Core Sync EXP : Waking up catchup task\n");
 	experiment_stopped = RUNNING;
@@ -467,7 +468,7 @@ void calcTaskRuntime(struct dilation_task_struct * task) {
         }
         else if (exp_highest_dilation > 0 && dil == 0) {
                 task->running_time = (div_s64_rem(FREEZE_QUANTUM*PRECISION,exp_highest_dilation,&rem) + rem);
-	}
+		}
         else if (exp_highest_dilation > 0 && dil < 0) { //1st > 0, 2nd < 0
                 task->running_time = (div_s64_rem(FREEZE_QUANTUM*PRECISION*PRECISION,exp_highest_dilation*temp_proc,&rem) + rem);
 
@@ -490,21 +491,21 @@ smallest aggregated running time of all currently assigned containers. All conta
 CPU are connected as a list, hence I call it a 'chain'
 ***/
 void assign_to_cpu(struct dilation_task_struct* task) {
-        int i;
-        int index;
-        s64 min;
-        struct dilation_task_struct *walk;
-        index = 0;
-        min = chainlength[index];
+    int i;
+    int index;
+    s64 min;
+    struct dilation_task_struct *walk;
+    index = 0;
+    min = chainlength[index];
 
-        for (i=1; i<number_of_heads; i++)
-        {
-                if (chainlength[i] < min)
-                {
-                        min = chainlength[i];
-                        index = i;
-                }
-        }
+    for (i=1; i<number_of_heads; i++)
+    {
+            if (chainlength[i] < min)
+            {
+                    min = chainlength[i];
+                    index = i;
+            }
+    }
 
 	walk = chainhead[index];
 	if (walk == NULL) {
@@ -526,10 +527,10 @@ void assign_to_cpu(struct dilation_task_struct* task) {
 	}
 	//set CPU mask
 	chainlength[index] = chainlength[index] + task->running_time;
-        bitmap_zero((&task->linux_task->cpus_allowed)->bits, 8);
-        cpumask_set_cpu(index+(TOTAL_CPUS - EXP_CPUS),&task->linux_task->cpus_allowed);
+    bitmap_zero((&task->linux_task->cpus_allowed)->bits, 8);
+    cpumask_set_cpu(index+(TOTAL_CPUS - EXP_CPUS),&task->linux_task->cpus_allowed);
 	task->cpu_assignment = index+(TOTAL_CPUS - EXP_CPUS);
-       	set_children_cpu(task->linux_task, task->cpu_assignment);
+   	set_children_cpu(task->linux_task, task->cpu_assignment);
 	return;
 }
 
@@ -551,7 +552,7 @@ void printChainInfo() {
 Get the next task that is allowed to run this round, this means if the running_time > 0 (CBE specific)
 ***/
 struct dilation_task_struct * getNextRunnableTask(struct dilation_task_struct * task) {
-        if (task == NULL) {
+    if (task == NULL) {
 		return NULL;
 	}
 	if (task->running_time > 0 && task->stopped != -1)
@@ -560,13 +561,13 @@ struct dilation_task_struct * getNextRunnableTask(struct dilation_task_struct * 
                 task = task->next;
                 if (task->running_time > 0 && task->stopped != -1)
                         return task;
-        }
-        //if got through loop, this chain is done for this iteration, return NULL
-        return NULL;
+    }
+    //if got through loop, this chain is done for this iteration, return NULL
+    return NULL;
 }
 
 s64 calculate_change(struct dilation_task_struct* task, s64 virt_time, s64 expected_time) {
-        s64 change;
+    s64 change;
 	s32 rem;
 	change = 0;
 
@@ -574,35 +575,35 @@ s64 calculate_change(struct dilation_task_struct* task, s64 virt_time, s64 expec
 
 	if (expected_time - virt_time < 0)
         {
-                if (task->linux_task->dilation_factor > 0)
-                        change = div_s64_rem( ((expected_time - virt_time)*-1)*task->linux_task->dilation_factor, PRECISION, &rem);
-                else if (task->linux_task->dilation_factor < 0)
-                {
-                        change = div_s64_rem( ((expected_time - virt_time)*-1)*PRECISION, task->linux_task->dilation_factor*-1,&rem);
-                        change += rem;
-                }
-                else if (task->linux_task->dilation_factor == 0)
-                        change = (expected_time - virt_time)*-1;
-		if (experiment_type == CS) {
-	        	change *= -1;
-		}
+            if (task->linux_task->dilation_factor > 0)
+                    change = div_s64_rem( ((expected_time - virt_time)*-1)*task->linux_task->dilation_factor, PRECISION, &rem);
+            else if (task->linux_task->dilation_factor < 0)
+            {
+                    change = div_s64_rem( ((expected_time - virt_time)*-1)*PRECISION, task->linux_task->dilation_factor*-1,&rem);
+                    change += rem;
+            }
+            else if (task->linux_task->dilation_factor == 0)
+                    change = (expected_time - virt_time)*-1;
+			if (experiment_type == CS) {
+        		change *= -1;
+			}
         }
         else
         {
-                if (task->linux_task->dilation_factor > 0)
-                        change = div_s64_rem( (expected_time - virt_time)*task->linux_task->dilation_factor, PRECISION, &rem);
-                else if (task->linux_task->dilation_factor < 0)
-                {
-                        change = div_s64_rem((expected_time - virt_time)*PRECISION, task->linux_task->dilation_factor*-1,&rem);
-                        change += rem;
-                }
-                else if (task->linux_task->dilation_factor == 0)
-                {
-                        change = (expected_time - virt_time);
-                }
-		if (experiment_type == CBE) {
-                	change *= -1;
-		}
+            if (task->linux_task->dilation_factor > 0)
+                    change = div_s64_rem( (expected_time - virt_time)*task->linux_task->dilation_factor, PRECISION, &rem);
+            else if (task->linux_task->dilation_factor < 0)
+            {
+                    change = div_s64_rem((expected_time - virt_time)*PRECISION, task->linux_task->dilation_factor*-1,&rem);
+                    change += rem;
+            }
+            else if (task->linux_task->dilation_factor == 0)
+            {
+                    change = (expected_time - virt_time);
+            }
+			if (experiment_type == CBE) {
+            	change *= -1;
+			}
         }
 
 
@@ -623,8 +624,7 @@ void calculate_virtual_time_difference(struct dilation_task_struct* task, s64 no
 
 
 	virt_time = get_virtual_time(task, now);
-
-        change = 0;
+	change = 0;
 	change = calculate_change(task, virt_time, expected_time);
 
 	if (experiment_type == CS) {
@@ -648,9 +648,9 @@ void calculate_virtual_time_difference(struct dilation_task_struct* task, s64 no
         	}
 	}
 	//printk(KERN_INFO "TimeKeeper: %d change: %lld\n",task->linux_task->pid, change);
-        task->stopped = 0;
-        task->running_time = ktime_to_ns(ktime);
-        return;
+    task->stopped = 0;
+    task->running_time = ktime_to_ns(ktime);
+    return;
 }
 
 /*
@@ -686,7 +686,7 @@ int calculate_sync_drift(void *data)
 	    do_gettimeofday(&ktv);
 		//for every task it is responsible for, determine how long it should run
 		while (task != NULL) {
-    	                now = timeval_to_ns(&ktv);
+    	    now = timeval_to_ns(&ktv);
 			calculate_virtual_time_difference(task, now, actual_time);
 			task = task->next;
 		}
@@ -700,22 +700,21 @@ int calculate_sync_drift(void *data)
 		}
 		else {
 			do{
-				
-        	                task = getNextRunnableTask(task);
-        	               	if (task != NULL)
-        	               	{
+		        task = getNextRunnableTask(task);
+    	       	if (task != NULL)
+    	       	{
 					printk(KERN_INFO "TimeKeeper: Sync Drift : Called  UnFreeze Proc on CPU: %d\n", cpuID);
 					unfreeze_proc_exp_recurse(task, actual_time);
 					printk(KERN_INFO "TimeKeeper : Sync Drift : Finished Unfreeze Proc on CPU: %d\n", cpuID);
-        	                       	task = task->next;
-					
-        	               	}
-        	               	else
-        	               	{
-        	                      	printk(KERN_INFO "TimeKeeper: %d chain %d has nothing to run\n",round,cpuID);
-									break;
-	                       	}
+    	           	task = task->next;
 				
+               	}
+               	else
+               	{
+                  	printk(KERN_INFO "TimeKeeper: %d chain %d has nothing to run\n",round,cpuID);
+					break;
+               	}
+			
 
 			}while(task != NULL);
 		}
@@ -755,88 +754,87 @@ int catchup_func(void *data)
         round_count = 0;
         set_current_state(TASK_INTERRUPTIBLE);
 
-	while (!kthread_should_stop())
+		while (!kthread_should_stop())
         {
-                round_count++;
-		redo_count = 0;
-                redo:
+            round_count++;
+			redo_count = 0;
+            redo:
 
-                if (experiment_stopped == STOPPING)
-                {
-						printk(KERN_INFO "TimeKeeper: Cleaning experiment via catchup task\n");
-                        clean_exp();
-						//goto end;
-						// *** Added new
-						set_current_state(TASK_INTERRUPTIBLE);	
-						schedule();
-						continue;
-  
-                }
+            if (experiment_stopped == STOPPING)
+            {
+					printk(KERN_INFO "TimeKeeper: Cleaning experiment via catchup task\n");
+                    clean_exp();
+					//goto end;
+					// *** Added new
+					set_current_state(TASK_INTERRUPTIBLE);	
+					schedule();
+					continue;
 
-                actual_time += expected_increase;
+            }
 
-		//clean up any stopped containers, alter TDFs if necessary
-		clean_stopped_containers();
-		if (dilation_change)
-			change_containers_dilation();
+            actual_time += expected_increase;
 
-                do_gettimeofday(&ktv);
-		atomic_set(&start_count, 0);
+			//clean up any stopped containers, alter TDFs if necessary
+			clean_stopped_containers();
+			if (dilation_change)
+				change_containers_dilation();
 
-		//wait up each synchronization worker thread, then wait til they are all done
-		if (number_of_heads > 0) {
-			printk(KERN_INFO "TimeKeeper: Round finished. Waking up worker threads to calculate next round time\n");
-			printk(KERN_INFO "TimeKeeper: Current FREEZE_QUANTUM : %d\n", FREEZE_QUANTUM);
-			atomic_set(&worker_count, number_of_heads);
+            do_gettimeofday(&ktv);
+			atomic_set(&start_count, 0);
+
+			//wait up each synchronization worker thread, then wait til they are all done
+			if (number_of_heads > 0) {
+				printk(KERN_INFO "TimeKeeper: Round finished. Waking up worker threads to calculate next round time\n");
+				printk(KERN_INFO "TimeKeeper: Current FREEZE_QUANTUM : %d\n", FREEZE_QUANTUM);
+				atomic_set(&worker_count, number_of_heads);
 			
-			for (i=0; i<number_of_heads; i++) {
-				//printk(KERN_INFO "TimeKeeper: Waking up sync thread : %d\n",i);
-				curr_sync_task_finished_flag[i] = 1;
-				atomic_set(&wake_up_signal_sync_drift[i],1);				
-				if(wake_up_process(chaintask[i]) == 1){ // chaintask refers to calculate_sync_drift thread
+				for (i=0; i<number_of_heads; i++) {
+					//printk(KERN_INFO "TimeKeeper: Waking up sync thread : %d\n",i);
+					curr_sync_task_finished_flag[i] = 1;
+					atomic_set(&wake_up_signal_sync_drift[i],1);				
+					if(wake_up_process(chaintask[i]) == 1){ // chaintask refers to calculate_sync_drift thread
 				
-					printk(KERN_INFO "TimeKeeper: catchup task. sync thread %d wake up\n",i);
+						printk(KERN_INFO "TimeKeeper: catchup task. sync thread %d wake up\n",i);
+					}
+					else{
+						printk(KERN_INFO "TimeKeeper: catchup task. sync thread %d already running\n",i);
+					}
+				
 				}
-				else{
 
-					printk(KERN_INFO "TimeKeeper: catchup task. sync thread %d already running\n",i);
-				}
-				
+				int run_cpu;
+				run_cpu = get_cpu();
+				printk(KERN_INFO "TimeKeeper: Waiting for sync drift threads to finish on run_cpu %d\n",run_cpu);
+				wait_event_interruptible(wq, atomic_read(&worker_count) == 0);
+				set_current_state(TASK_INTERRUPTIBLE);
+				printk(KERN_INFO "TimeKeeper: All sync drift thread finished\n");			
 			}
-			int run_cpu;
-			run_cpu = get_cpu();
-			printk(KERN_INFO "TimeKeeper: Waiting for sync drift threads to finish on run_cpu %d\n",run_cpu);
-			wait_event_interruptible(wq, atomic_read(&worker_count) == 0);
-			set_current_state(TASK_INTERRUPTIBLE);
-			printk(KERN_INFO "TimeKeeper: All sync drift thread finished\n");			
-		}
 
-		//if there are no continers in the experiment, then stop the experiment
-		if (proc_num == 0 && experiment_stopped == RUNNING) {
-			printk(KERN_INFO "TimeKeeper: Cleaning experiment via catchup task because no tasks left\n");
-                        clean_exp();	
-			// *** Added new
-			set_current_state(TASK_INTERRUPTIBLE);	
-			schedule();
-			continue;
-  		
-		}
-                else if ((number_of_heads > 0 && atomic_read(&start_count) == number_of_heads) || (number_of_heads > 0 && atomic_read(&running_done) == number_of_heads))
-                { 	//something bad happened, because not a single task was started, think due to page fault
-                        redo_count++;
-                        atomic_set(&running_done, 0);
-                        printk(KERN_INFO "TimeKeeper: %d redo computations %d proc_num: %d exp stopped: %d\n",round_count, redo_count, proc_num, experiment_stopped);
-                        goto redo;
-                }
+			//if there are no continers in the experiment, then stop the experiment
+			if (proc_num == 0 && experiment_stopped == RUNNING) {
+				printk(KERN_INFO "TimeKeeper: Cleaning experiment via catchup task because no tasks left\n");
+                clean_exp();	
+				set_current_state(TASK_INTERRUPTIBLE);	
+				schedule();
+				continue;
+	  		
+			}
+            else if ((number_of_heads > 0 && atomic_read(&start_count) == number_of_heads) || (number_of_heads > 0 && atomic_read(&running_done) == number_of_heads))
+            { 	//something bad happened, because not a single task was started, think due to page fault
+                    redo_count++;
+                    atomic_set(&running_done, 0);
+                    printk(KERN_INFO "TimeKeeper: %d redo computations %d proc_num: %d exp stopped: %d\n",round_count, redo_count, proc_num, experiment_stopped);
+                    goto redo;
+            }
 
-		end:
+			end:
                 set_current_state(TASK_INTERRUPTIBLE);	
 		
-		if(experiment_stopped == NOTRUNNING){
-			set_current_state(TASK_INTERRUPTIBLE);	
-			schedule();			
-		}
-		printk(KERN_INFO "TimeKeeper : Catchup Function Resumed\n");
+			if(experiment_stopped == NOTRUNNING){
+				set_current_state(TASK_INTERRUPTIBLE);	
+				schedule();			
+			}
+			printk(KERN_INFO "TimeKeeper : Catchup Function Resumed\n");
 
         }
         return 0;
@@ -858,43 +856,43 @@ void change_containers_dilation() {
 
         list_for_each_safe(pos, n, &exp_list)
         {
-                task = list_entry(pos, struct dilation_task_struct, list);
-                if (task->stopped  == -1) //its stopped, so skip it
-                {
-			continue;
-                }
-		if (task->newDilation != -1) {
-			dilate_proc_recurse_exp(task->linux_task->pid, task->newDilation); //change its dilation
-			task->newDilation = -1; //reset
-			calcTaskRuntime(task); //update its runtime. // *** I don't think it is needed here.
-		}
+            task = list_entry(pos, struct dilation_task_struct, list);
+            if (task->stopped  == -1) //its stopped, so skip it
+            {
+				continue;
+            }
+			if (task->newDilation != -1) {
+				dilate_proc_recurse_exp(task->linux_task->pid, task->newDilation); //change its dilation
+				task->newDilation = -1; //reset
+				calcTaskRuntime(task); //update its runtime. // *** I don't think it is needed here.
+			}
 
-		spin_lock(&task->linux_task->dialation_lock);
-
-                if (task->linux_task->dilation_factor > new_highest)
-                {
-                        new_highest = task->linux_task->dilation_factor;
-                        possible_leader = task;
-                }
-		spin_unlock(&task->linux_task->dialation_lock);
+			spin_lock(&task->linux_task->dialation_lock);
+            if (task->linux_task->dilation_factor > new_highest)
+            {
+                new_highest = task->linux_task->dilation_factor;
+                possible_leader = task;
+            }
+			spin_unlock(&task->linux_task->dialation_lock);
 
         }
 
-	if (new_highest > exp_highest_dilation || new_highest < exp_highest_dilation)
-        {        // If we have a new highest dilation, or if the leader container finished - save the new leader
-                exp_highest_dilation = new_highest;
-                leader_task = possible_leader;
-                if (leader_task != NULL)
-                {
-                        calcExpectedIncrease();
+		if (new_highest > exp_highest_dilation || new_highest < exp_highest_dilation)
+	    {
+	        // If we have a new highest dilation, or if the leader container finished - save the new leader
+            exp_highest_dilation = new_highest;
+            leader_task = possible_leader;
+            if (leader_task != NULL)
+            {
+                calcExpectedIncrease();
 		        printk(KERN_INFO "TimeKeeper: New highest dilation is: %d new expected_increase: %lld\n", exp_highest_dilation, expected_increase);
-                }
-                //update running time for each container because we have a new leader
-                list_for_each_safe(pos, n, &exp_list)
-                {
-                        task = list_entry(pos, struct dilation_task_struct, list);
-                        calcTaskRuntime(task);
-                }
+            }
+            //update running time for each container because we have a new leader
+            list_for_each_safe(pos, n, &exp_list)
+            {
+                task = list_entry(pos, struct dilation_task_struct, list);
+                calcTaskRuntime(task);
+            }
         }
 	dilation_change = 0; //reset global flag
 }
@@ -903,35 +901,35 @@ void change_containers_dilation() {
 If a container stops in the middle of an experiment, clean it up
 */
 void clean_stopped_containers() {
-        struct list_head *pos;
-        struct list_head *n;
-        struct dilation_task_struct* task;
-        struct dilation_task_struct* next_task;
-        struct dilation_task_struct* prev_task;
+    struct list_head *pos;
+    struct list_head *n;
+    struct dilation_task_struct* task;
+    struct dilation_task_struct* next_task;
+    struct dilation_task_struct* prev_task;
 	struct dilation_task_struct* possible_leader;
-        int new_highest;
-        int did_leader_finish;
+    int new_highest;
+    int did_leader_finish;
 
 	did_leader_finish = 0;
-        new_highest = -99999;
-        possible_leader = NULL;
+    new_highest = -99999;
+    possible_leader = NULL;
 	//for every container in the experiment, see if it has finished execution, if yes, clean it up.
 	// also check the possibility of needing to determine a new leader
-        list_for_each_safe(pos, n, &exp_list)
-        {
+    list_for_each_safe(pos, n, &exp_list)
+    {
 		task = list_entry(pos, struct dilation_task_struct, list);
-                if (task->stopped  == -1) //if stopped = -1, the process is no longer running, so free the structure
-                {
+        if (task->stopped  == -1) //if stopped = -1, the process is no longer running, so free the structure
+        {
 
 			printk(KERN_INFO "TimeKeeper : Detected stopped task\n");
-                	if (leader_task == task)
+          	if (leader_task == task)
 			{ //the leader task is done, we NEED a new leader)
-                		did_leader_finish = 1;
-                	}
-                	if (&task->timer != NULL)
-                	{
-                		hrtimer_cancel( &task->timer );
-                	}
+           		did_leader_finish = 1;
+           	}
+           	if (&task->timer != NULL)
+           	{
+           		hrtimer_cancel( &task->timer );
+           	}
 
 			prev_task = task->prev;
 			next_task = task->next;
@@ -955,39 +953,39 @@ void clean_stopped_containers() {
 			chainlength[task->cpu_assignment - (TOTAL_CPUS - EXP_CPUS)] -= task->running_time;
 
 			proc_num--;
-                	printk(KERN_INFO "TimeKeeper: process %d is stopped!\n", task->linux_task->pid);
+           	printk(KERN_INFO "TimeKeeper: process %d is stopped!\n", task->linux_task->pid);
 			list_del(pos);
-                	kfree(task);
+           	kfree(task);
 			continue;
-                }
+        }
 
 		spin_lock(&task->linux_task->dialation_lock);
-                if (task->linux_task->dilation_factor > new_highest)
-                {
-                	new_highest = task->linux_task->dilation_factor;
-                        possible_leader = task;
-                }
+        if (task->linux_task->dilation_factor > new_highest)
+        {
+        	new_highest = task->linux_task->dilation_factor;
+                possible_leader = task;
+        }
 		spin_unlock(&task->linux_task->dialation_lock);
 
 	}
-        if (new_highest > exp_highest_dilation || did_leader_finish == 1)
-        {        // If we have a new highest dilation, or if the leader container finished - save the new leader
-        	exp_highest_dilation = new_highest;
-                leader_task = possible_leader;
-                if (leader_task != NULL)
-                {
-                	calcExpectedIncrease();
+    if (new_highest > exp_highest_dilation || did_leader_finish == 1)
+    {        // If we have a new highest dilation, or if the leader container finished - save the new leader
+    	exp_highest_dilation = new_highest;
+        leader_task = possible_leader;
+        if (leader_task != NULL)
+        {
+           	calcExpectedIncrease();
 			printk(KERN_INFO "TimeKeeper: New highest dilation is: %d new expected_increase: %lld\n", exp_highest_dilation, expected_increase);
-                }
-                //update running time for each container because we have a new leader
-                list_for_each_safe(pos, n, &exp_list)
-                {
-                	task = list_entry(pos, struct dilation_task_struct, list);
-                        calcTaskRuntime(task);
-                }
         }
+        //update running time for each container because we have a new leader
+        list_for_each_safe(pos, n, &exp_list)
+        {
+           	task = list_entry(pos, struct dilation_task_struct, list);
+            calcTaskRuntime(task);
+        }
+    }
 	stopped_change = 0;
-        return;
+    return;
 }
 
 /***
@@ -996,14 +994,14 @@ should be ran within that round.
 ***/
 enum hrtimer_restart exp_hrtimer_callback( struct hrtimer *timer )
 {
-        int dil;
-        struct dilation_task_struct *task;
-        struct dilation_task_struct * callingtask;
-        int startJob;
-        ktime_t ktime;
-        task = container_of(timer, struct dilation_task_struct, timer);
-        dil = task->linux_task->dilation_factor;
-        callingtask = task;
+    int dil;
+    struct dilation_task_struct *task;
+    struct dilation_task_struct * callingtask;
+    int startJob;
+    ktime_t ktime;
+    task = container_of(timer, struct dilation_task_struct, timer);
+    dil = task->linux_task->dilation_factor;
+    callingtask = task;
 	int CPUID = callingtask->cpu_assignment - (TOTAL_CPUS - EXP_CPUS);
 
 	if (catchup_task == NULL) {
@@ -1030,16 +1028,17 @@ enum hrtimer_restart exp_hrtimer_callback( struct hrtimer *timer )
 		
 	}
 
-        return HRTIMER_NORESTART;
+    return HRTIMER_NORESTART;
 }
 /* Set's the freeze times of the process and all it's children to the specified argument */
 void set_all_freeze_times_recurse(struct task_struct * aTask, s64 freeze_time,s64 last_ppp, int max_no_recursions){
 
 	struct list_head *list;
-        struct task_struct *taskRecurse;
-        struct dilation_task_struct *dilTask;
-        struct task_struct *me;
-        struct task_struct *t;
+    struct task_struct *taskRecurse;
+    struct dilation_task_struct *dilTask;
+    struct task_struct *me;
+    struct task_struct *t;
+    unsigned long flags;
 	s32 rem;
 
 	if(max_no_recursions >= 100)
@@ -1058,10 +1057,11 @@ void set_all_freeze_times_recurse(struct task_struct * aTask, s64 freeze_time,s6
 	t = me;
 	do {
 
-		spin_lock(&t->dialation_lock);
+		//spin_lock(&t->dialation_lock); // *** Modified
+		//spin_lock_irqsave(&t->dialation_lock,flags);
 		if (t->freeze_time == 0 && t->wakeup_time ==  0)
-               	{
-	                t->freeze_time = freeze_time;
+       	{
+	        t->freeze_time = freeze_time;
 			if(last_ppp != -1){
 				t->past_physical_time = t->past_physical_time + last_ppp;
 				if(aTask->dilation_factor > 0)
@@ -1071,7 +1071,7 @@ void set_all_freeze_times_recurse(struct task_struct * aTask, s64 freeze_time,s6
 				
 			}
 			//printk(KERN_INFO "TimeKeeper: Freeze time of PID : %d is %lld\n", t->pid, t->freeze_time);
-               	}
+       	}
 		else {
 
 			if(t->freeze_time == -1 && t->wakeup_time == 0){
@@ -1083,7 +1083,7 @@ void set_all_freeze_times_recurse(struct task_struct * aTask, s64 freeze_time,s6
 			else{
 				if(t->wakeup_time == 0){
 
-        	        		//printk(KERN_INFO "TimeKeeper: Set all freeze times : Warning. Thread already frozen. pid: %d dilation %d\n", t->pid, t->dilation_factor);
+        	       	//printk(KERN_INFO "TimeKeeper: Set all freeze times : Warning. Thread already frozen. pid: %d dilation %d\n", t->pid, t->dilation_factor);
 					if(aTask->dilation_factor > 0) 
 						t->past_virtual_time = t->past_virtual_time + div_s64_rem((freeze_time - t->freeze_time)*PRECISION,aTask->dilation_factor,&rem);
 					else
@@ -1093,24 +1093,25 @@ void set_all_freeze_times_recurse(struct task_struct * aTask, s64 freeze_time,s6
 			}
 		}
 
-		spin_unlock(&t->dialation_lock);		
+		//spin_unlock(&t->dialation_lock);		// *** Modified
+		//spin_unlock_irqrestore(&t->dialation_lock,flags);
 
 	} while_each_thread(me, t);
 
 	int i = 0;
-        list_for_each(list, &aTask->children)
-        {
+    list_for_each(list, &aTask->children)
+    {
 		if(i > 1000)
 			return;
-                taskRecurse = list_entry(list, struct task_struct, sibling);
-                if (taskRecurse->pid == 0) {
-                        continue;
-                }
-		
-                set_all_freeze_times_recurse(taskRecurse, freeze_time,last_ppp,max_no_recursions + 1);
+        taskRecurse = list_entry(list, struct task_struct, sibling);
+        if (taskRecurse->pid == 0) {
+                continue;
+        }
+
+        set_all_freeze_times_recurse(taskRecurse, freeze_time,last_ppp,max_no_recursions + 1);
 		i++;
 
-        }
+    }
 }
 
 
@@ -1118,34 +1119,36 @@ void set_all_freeze_times_recurse(struct task_struct * aTask, s64 freeze_time,s6
 void set_all_past_physical_times_recurse(struct task_struct * aTask, s64 time, int max_no_of_recursions){
 
 	struct list_head *list;
-        struct task_struct *taskRecurse;
-        struct dilation_task_struct *dilTask;
-        struct task_struct *me;
-        struct task_struct *t;
+    struct task_struct *taskRecurse;
+    struct dilation_task_struct *dilTask;
+    struct task_struct *me;
+    struct task_struct *t;
+    unsigned long flags;
 
 	if(max_no_of_recursions >= 100)
 		return;
 
-        if (aTask == NULL) {
-                printk(KERN_INFO "TimeKeeper: Set all past physical times : Task does not exist\n");
-                return;
-        }
-        if (aTask->pid == 0) {
+    if (aTask == NULL) {
+        printk(KERN_INFO "TimeKeeper: Set all past physical times : Task does not exist\n");
+        return;
+    }
+    if (aTask->pid == 0) {
 		printk(KERN_INFO "TimeKeeper: Set all past physical times : pid 0 error\n");
-                return;
-        }
+        return;
+    }
 
 	me = aTask;
 	t = me;
 	do {
 
-		spin_lock(&t->dialation_lock);
+		//**spin_lock(&t->dialation_lock);
+		spin_lock_irqsave(&t->dialation_lock,flags);
 		if (t->freeze_time > 0 && t->wakeup_time ==  0)
-               	{
+       	{
 			t->past_physical_time = t->past_physical_time + (time - t->freeze_time);
 			t->freeze_time = 0;
 			
-               	}
+       	}
 		else {
 			if(t->wakeup_time == 0){
         	        	
@@ -1159,25 +1162,26 @@ void set_all_past_physical_times_recurse(struct task_struct * aTask, s64 time, i
 				}
 			}
 		}
-		spin_unlock(&t->dialation_lock);
+		//**spin_unlock(&t->dialation_lock);
+		spin_unlock_irqrestore(&t->dialation_lock,flags);
 		
 	} while_each_thread(me, t);
 
 	int i = 0;
-        list_for_each(list, &aTask->children)
-        {
+    list_for_each(list, &aTask->children)
+    {
 		if(i > 1000)
 			return;
 
-                taskRecurse = list_entry(list, struct task_struct, sibling);
-                if (taskRecurse->pid == 0) {
-                        continue;
-                }
-		
-                set_all_past_physical_times_recurse(taskRecurse, time,max_no_of_recursions + 1);
+        taskRecurse = list_entry(list, struct task_struct, sibling);
+        if (taskRecurse->pid == 0) {
+                continue;
+        }
+
+        set_all_past_physical_times_recurse(taskRecurse, time,max_no_of_recursions + 1);
 		i++;
 
-        }
+    }
 }
 
 /**
@@ -1321,15 +1325,17 @@ void clean_exp() {
 			while (curr != NULL) {
 				tmp = curr;
 				curr = curr->next; //move to next timeline
-				kthread_stop(tmp->thread);
+				//kthread_stop(tmp->thread);
 				//kthread_stop(tmp->run_timeline_thread);
 				atomic_set(&tmp->pthread_done,1);
-				atomic_set(&tmp->stop_thread,1);
-				wake_up_interruptible(&tmp->pthread_queue);				
-				while(atomic_read(&tmp->stop_thread) != 0)
-					;
+				atomic_set(&tmp->progress_thread_done,1);
+				atomic_set(&tmp->stop_thread,2);
+				wake_up_interruptible_sync(&tmp->pthread_queue);	
+				wake_up_interruptible_sync(&tmp->progress_thread_queue);				
+				//while(atomic_read(&tmp->stop_thread) > 0)
+				//	;
 				printk(KERN_INFO "TimeKeeper : Stopped all kernel threads for timeline : %d\n",tmp->number);
-				kfree(tmp); // remove prev timeline
+				//kfree(tmp); // remove prev timeline
 			}
 		}
 	}
@@ -1480,10 +1486,10 @@ void set_children_policy(struct task_struct *aTask, int policy, int priority) {
 Set the time dilation variables to be consistent with all children
 ***/
 void set_children_cpu(struct task_struct *aTask, int cpu) {
-        struct list_head *list;
-        struct task_struct *taskRecurse;
+    struct list_head *list;
+    struct task_struct *taskRecurse;
 	struct task_struct *me;
-        struct task_struct *t;
+    struct task_struct *t;
 
 	if (aTask == NULL) {
                 printk(KERN_INFO "TimeKeeper: Task does not exist\n");
@@ -1537,14 +1543,14 @@ int freeze_children(struct task_struct *aTask, s64 time) {
     struct dilation_task_struct *dilTask;
 	struct task_struct *me;
 	struct task_struct *t;
-        if (aTask == NULL) {
+    if (aTask == NULL) {
                 printk(KERN_INFO "TimeKeeper: Task does not exist\n");
                 return 0;
-        }
-        if (aTask->pid == 0) {
+    }
+    if (aTask->pid == 0) {
 		printk(KERN_INFO "TimeKeeper: in freeze, it equals 0\n");
-                return 0;
-        }
+        return 0;
+    }
 
 	me = aTask;
 	t = me;
@@ -1571,32 +1577,35 @@ int freeze_children(struct task_struct *aTask, s64 time) {
         list_for_each(list, &aTask->children)
         {
                 taskRecurse = list_entry(list, struct task_struct, sibling);
+                if(taskRecurse == aTask || taskRecurse->pid == aTask->pid)
+                	return 0;
                 if (taskRecurse->pid == 0) {
                         continue;
                 }
-		dilTask = container_of(&taskRecurse, struct dilation_task_struct, linux_task);
+				dilTask = container_of(&taskRecurse, struct dilation_task_struct, linux_task);
 
-		spin_lock(&taskRecurse->dialation_lock);
-		if (taskRecurse->wakeup_time > 0 ) {
-			//task already has a wakeup_time set, so its already frozen, dont need to do anything
-			spin_unlock(&taskRecurse->dialation_lock);
-			kill(taskRecurse, SIGSTOP, dilTask);		// *** Added
-		}
+				spin_lock(&taskRecurse->dialation_lock);
+				if (taskRecurse->wakeup_time > 0 ) {
+					//task already has a wakeup_time set, so its already frozen, dont need to do anything
+					spin_unlock(&taskRecurse->dialation_lock);
+					kill(taskRecurse, SIGSTOP, dilTask);		// *** Added
+				}
                 else if (taskRecurse->freeze_time == 0) //if task is not frozen yet
                 {
-        	        taskRecurse->freeze_time = time;
-			spin_unlock(&taskRecurse->dialation_lock);
-                	kill(taskRecurse, SIGSTOP, dilTask);
+        	    	    taskRecurse->freeze_time = time;
+						spin_unlock(&taskRecurse->dialation_lock);
+                		kill(taskRecurse, SIGSTOP, dilTask);
                 }
-		else {
-			spin_unlock(&taskRecurse->dialation_lock);
-                	printk(KERN_INFO "TimeKeeper: Process already frozen %d wakeuptime %lld\n", taskRecurse->pid, taskRecurse->wakeup_time);
-		}
+				else {
+						spin_unlock(&taskRecurse->dialation_lock);
+                		printk(KERN_INFO "TimeKeeper: Process already frozen %d wakeuptime %lld\n", taskRecurse->pid, taskRecurse->wakeup_time);
+                		return -1;
+				}
 		
 
 
                 if (freeze_children(taskRecurse, time) == -1)
-			return 0;
+					return 0;
         }
 	return 0;
 }
@@ -1639,12 +1648,12 @@ int unfreeze_children(struct task_struct *aTask, s64 time, s64 expected_time) {
 	struct select_helper_struct * task_select_helper;
 
         if (aTask == NULL) {
-                printk(KERN_INFO "TimeKeeper: Task does not exist\n");
-                return 0;
+            printk(KERN_INFO "TimeKeeper: Task does not exist\n");
+            return 0;
         }
         if (aTask->pid == 0) {
-		printk(KERN_INFO "TimeKeeper: pid is 0 in unfreeze\n");
-                return 0;
+			printk(KERN_INFO "TimeKeeper: pid is 0 in unfreeze\n");
+            return 0;
         }
 
 	me = aTask;
@@ -1653,16 +1662,16 @@ int unfreeze_children(struct task_struct *aTask, s64 time, s64 expected_time) {
 		spin_lock(&t->dialation_lock);
 
 		if(experiment_stopped == STOPPING){
-				t->virt_start_time = 0;
+			t->virt_start_time = 0;
 		}
 		
 		if (t->pid != aTask->pid) {
-               		if (t->freeze_time > 0)
-               		{
+            if (t->freeze_time > 0)
+            {
 						t->past_physical_time = t->past_physical_time + (time - t->freeze_time);
 	        	        t->freeze_time = 0;
                 		kill(t, SIGCONT, NULL);
-               		}
+            }
 			else {
         		        printk(KERN_INFO "TimeKeeper: Thread not frozen pid: %d dilation %d\n", t->pid, t->dilation_factor);
 			}
@@ -1713,6 +1722,8 @@ int unfreeze_children(struct task_struct *aTask, s64 time, s64 expected_time) {
                 		kill(taskRecurse, SIGCONT, dilTask);
 
                 	}
+                	else
+                		spin_unlock(&taskRecurse->dialation_lock);
                 	/*
                 	else if(task_poll_helper != NULL){
 
@@ -1741,6 +1752,8 @@ int unfreeze_children(struct task_struct *aTask, s64 time, s64 expected_time) {
 						spin_unlock(&taskRecurse->dialation_lock);
 						kill(taskRecurse, SIGCONT, dilTask);		// *** Added
 					}
+					else
+						spin_unlock(&taskRecurse->dialation_lock);
 					/*else if(task_poll_helper != NULL){
 
         	        	task_poll_helper->done = 1;
@@ -2151,6 +2164,7 @@ int run_schedule_queue_head_process(struct dilation_task_struct * lxc, lxc_sched
 	struct select_helper_struct * select_helper = NULL;
 	struct poll_helper_struct * task_poll_helper = NULL;
 	struct select_helper_struct * task_select_helper = NULL;
+	unsigned long flags;
 
 	if(head->duration_left <= 0 || remaining_run_time <= 0){
 		printk(KERN_INFO "TimeKeeper : ERROR Cannot run task. duration left is 0");
@@ -2178,41 +2192,48 @@ int run_schedule_queue_head_process(struct dilation_task_struct * lxc, lxc_sched
     me = curr_task;
 	t = me;
 
-	spin_lock(&t->dialation_lock);
+	//**spin_lock(&t->dialation_lock);
+	//spin_lock_irqsave(&t->dialation_lock,flags);
 		
 		task_poll_helper = hmap_get(&poll_process_lookup,&t->pid);
 		task_select_helper = hmap_get(&select_process_lookup,&t->pid);
 		if(task_poll_helper != NULL){
 			t->freeze_time = 0;
 			task_poll_helper->done = 1;
-			spin_unlock(&t->dialation_lock);
+			//**spin_unlock(&t->dialation_lock);
+			//spin_unlock_irqrestore(&t->dialation_lock,flags);
 			wake_up(&task_poll_helper->w_queue);
 
 		}
 		else if(task_select_helper != NULL){
 			t->freeze_time = 0;
 			task_select_helper->done = 1;
-			spin_unlock(&t->dialation_lock);
+			//**spin_unlock(&t->dialation_lock);
+			//spin_unlock_irqrestore(&t->dialation_lock,flags);
 			wake_up(&task_select_helper->w_queue);
 		}
     	else if (t->freeze_time > 0 && t->wakeup_time == 0)
        	{	
 
                		if(kill(t, SIGCONT, NULL) < 0){
-						spin_unlock(&t->dialation_lock);
+						//**spin_unlock(&t->dialation_lock);
+						//spin_unlock_irqrestore(&t->dialation_lock,flags);
 						return remaining_run_time;
 					}
 			t->freeze_time = 0;
-			spin_unlock(&t->dialation_lock);
+			//**spin_unlock(&t->dialation_lock);
+			//spin_unlock_irqrestore(&t->dialation_lock,flags);
 
         }
 		else {
 				if(t->freeze_time <= 0 && t->wakeup_time == 0){
 
        		        //printk(KERN_INFO "TimeKeeper: Thread not frozen pid: %d dilation %d\n", t->pid, t->dilation_factor);
+       		        t->freeze_time = 0;
 					kill(t, SIGCONT, NULL);
-					t->freeze_time = 0;
-					spin_unlock(&t->dialation_lock);
+					
+					//**spin_unlock(&t->dialation_lock);
+					//spin_unlock_irqrestore(&t->dialation_lock,flags);
 				}
 				else{
 
@@ -2220,7 +2241,8 @@ int run_schedule_queue_head_process(struct dilation_task_struct * lxc, lxc_sched
 						
 						if(helper == NULL && select_helper == NULL){
 							printk(KERN_INFO "TimeKeeper: Run schedule queue head ERROR. Wakeup time still high\n");
-							spin_unlock(&t->dialation_lock);
+							//**spin_unlock(&t->dialation_lock);
+							//spin_unlock_irqrestore(&t->dialation_lock,flags);
 							return remaining_run_time;			
 						}			
 
@@ -2240,7 +2262,8 @@ int run_schedule_queue_head_process(struct dilation_task_struct * lxc, lxc_sched
 						t->freeze_time = 0;
 						t->wakeup_time = 0;
 
-						spin_unlock(&t->dialation_lock);				
+						//**spin_unlock(&t->dialation_lock);				
+						//spin_unlock_irqrestore(&t->dialation_lock,flags);
 
 
 					}
@@ -2263,10 +2286,12 @@ int run_schedule_queue_head_process(struct dilation_task_struct * lxc, lxc_sched
 						t->wakeup_time = 0;
 
 						if(kill(t, SIGCONT, NULL) < 0){
-							spin_unlock(&t->dialation_lock);
+							//**spin_unlock(&t->dialation_lock);
+							//spin_unlock_irqrestore(&t->dialation_lock,flags);
 							return remaining_run_time;				
 						}						
-						spin_unlock(&t->dialation_lock);
+						//**spin_unlock(&t->dialation_lock);
+						//spin_unlock_irqrestore(&t->dialation_lock,flags);
 			
 					}
 
@@ -2278,8 +2303,15 @@ int run_schedule_queue_head_process(struct dilation_task_struct * lxc, lxc_sched
 	ktime = ktime_set( 0, timer_fire_time );
 	int ret;
 	set_current_state(TASK_INTERRUPTIBLE);
-	hrtimer_start(&lxc->timer,ktime,HRTIMER_MODE_REL);
-	schedule();
+	if(experiment_type != CS){
+		hrtimer_start(&lxc->timer,ktime,HRTIMER_MODE_REL);
+		schedule();
+	}
+	else{
+		hrtimer_start(&lxc->timer,ktime,HRTIMER_MODE_REL);
+		wait_event_interruptible(lxc->tl->unfreeze_proc_queue,atomic_read(&lxc->tl->hrtimer_done) == 1);
+		atomic_set(&lxc->tl->hrtimer_done,0);
+	}
 	set_current_state(TASK_RUNNING);
 	curr_process_finished_flag[CPUID] = 0;
 
@@ -2288,7 +2320,6 @@ int run_schedule_queue_head_process(struct dilation_task_struct * lxc, lxc_sched
 
 		//printk(KERN_INFO "TimeKeeper : Resetting head to duration of %lld\n", head->share_factor);
 		head->duration_left = head->share_factor;
-
 		requeue_schedule_list(lxc);
 	}
 	
@@ -2299,23 +2330,28 @@ int run_schedule_queue_head_process(struct dilation_task_struct * lxc, lxc_sched
 	do_gettimeofday(&now);
     now_ns = timeval_to_ns(&now);
 
-	spin_lock(&t->dialation_lock);
+	//spin_lock(&t->dialation_lock);
+	//spin_lock_irqsave(&t->dialation_lock,flags);
 	if (t->wakeup_time > 0 ) {
 		// do nothing. already frozen.
-		spin_unlock(&t->dialation_lock);
+		//spin_unlock(&t->dialation_lock);
+		//spin_unlock_irqrestore(&t->dialation_lock,flags);
 	}
 	else if (t->freeze_time == 0) //if task is not frozen yet
        	{
        		if(kill(t, SIGSTOP, NULL) < 0){
-			spin_unlock(&t->dialation_lock);
-			return rem_time;
-		}
-		t->freeze_time = now_ns;
-		spin_unlock(&t->dialation_lock);
+				//spin_unlock(&t->dialation_lock);
+       			//spin_unlock_irqrestore(&t->dialation_lock,flags);
+				return rem_time;
+			}
+			t->freeze_time = now_ns;
+			//spin_unlock(&t->dialation_lock);
+			//spin_unlock_irqrestore(&t->dialation_lock,flags);
        	}
 	else {
-		spin_unlock(&t->dialation_lock);
-       		printk(KERN_INFO "TimeKeeper: Run Head Process : Thread already frozen %d wakeuptime %lld\n", t->pid, t->wakeup_time);
+		//spin_unlock(&t->dialation_lock);
+		//spin_unlock_irqrestore(&t->dialation_lock,flags);
+       	printk(KERN_INFO "TimeKeeper: Run Head Process : Thread already frozen %d wakeuptime %lld\n", t->pid, t->wakeup_time);
 	}
 	
 		
@@ -2331,18 +2367,18 @@ int run_schedule_queue_head_process(struct dilation_task_struct * lxc, lxc_sched
 Unfreezes the container, then calls unfreeze_children to unfreeze all of the children
 ***/
 int unfreeze_proc_exp_recurse(struct dilation_task_struct *aTask, s64 expected_time) {
-        struct timeval now;
-        s64 now_ns;
+    struct timeval now;
+    s64 now_ns;
 	s64 start_ns;
 	struct hrtimer * alt_timer = &aTask->timer;
 	int CPUID = aTask->cpu_assignment - (TOTAL_CPUS - EXP_CPUS);
 	int i = 0;
 
-        if (aTask->linux_task->freeze_time == 0)
-        {
+    if (aTask->linux_task->freeze_time == 0)
+    {
         printk(KERN_INFO "TimeKeeper: Process not frozen pid: %d dilation %d in recurse\n", aTask->linux_task->pid, aTask->linux_task->dilation_factor);
-                return -1;
-        }
+        return -1;
+    }
         
 	atomic_set(&wake_up_signal_sync_drift[CPUID],0);	// *** Added new
 
@@ -2373,8 +2409,15 @@ int unfreeze_proc_exp_recurse(struct dilation_task_struct *aTask, s64 expected_t
 		ktime_t ktime;
 		ktime = ktime_set(0,aTask->running_time);
 		set_current_state(TASK_INTERRUPTIBLE);
-		hrtimer_start(&aTask->timer,ktime,HRTIMER_MODE_REL);
-		schedule();
+		if(experiment_type != CS){
+			hrtimer_start(&aTask->timer,ktime,HRTIMER_MODE_REL);
+			schedule();
+		}
+		else{
+			hrtimer_start(&aTask->timer,ktime,HRTIMER_MODE_REL);
+			wait_event_interruptible(aTask->tl->unfreeze_proc_queue,atomic_read(&aTask->tl->hrtimer_done) == 1);
+			atomic_set(&aTask->tl->hrtimer_done,0);
+		}
 		set_current_state(TASK_RUNNING);
 		printk(KERN_INFO "TimeKeeper : Unfreeze proc exp recurse single process on CPU %d resumed\n",CPUID);
 		freeze_proc_exp_recurse(aTask);
@@ -2405,7 +2448,7 @@ int unfreeze_proc_exp_recurse(struct dilation_task_struct *aTask, s64 expected_t
 		}while(rem_time > 0);
 
 		do_gettimeofday(&now);
-	        now_ns = timeval_to_ns(&now);
+	    now_ns = timeval_to_ns(&now);
 		//**printk(KERN_INFO "TimeKeeper : Setting Freeze times on CPU : %d for lxc : %d\n",CPUID, aTask->linux_task->pid);
 		set_all_freeze_times_recurse(aTask->linux_task, now_ns,aTask->running_time,0);
 	
@@ -2430,7 +2473,7 @@ struct task_struct *aTask;
 s64 get_virtual_time(struct dilation_task_struct* task, s64 now) {
 	s64 virt_time;
 	virt_time = get_virtual_time_task(task->linux_task, now);
-        task->curr_virt_time = virt_time;
+    task->curr_virt_time = virt_time;
 	return virt_time;
 }
 

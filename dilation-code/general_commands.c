@@ -59,26 +59,29 @@ s64 get_virtual_time_task(struct task_struct* task, s64 now)
         s32 rem;
         s64 virt_time;
 
+        spin_lock(&task->dialation_lock);
+
         real_running_time = now - task->virt_start_time;
         temp_past_physical_time = task->past_physical_time + (now - task->freeze_time); // task->freeze_time - when it was frozen
 
         //get current virtual time of a task
         if (task->dilation_factor > 0)
         {
-		dilated_running_time = div_s64_rem( (real_running_time - temp_past_physical_time)*PRECISION ,task->dilation_factor,&rem) + task->past_virtual_time;
-                virt_time = dilated_running_time + task->virt_start_time;
+		      dilated_running_time = div_s64_rem( (real_running_time - temp_past_physical_time)*PRECISION ,task->dilation_factor,&rem) + task->past_virtual_time;
+              virt_time = dilated_running_time + task->virt_start_time;
         }
         else if (task->dilation_factor < 0)
         {
-		dilated_running_time = div_s64_rem( (real_running_time - temp_past_physical_time)*(task->dilation_factor*-1), PRECISION, &rem) + task->past_virtual_time;
-                virt_time =  dilated_running_time + task->virt_start_time;
+		      dilated_running_time = div_s64_rem( (real_running_time - temp_past_physical_time)*(task->dilation_factor*-1), PRECISION, &rem) + task->past_virtual_time;
+              virt_time =  dilated_running_time + task->virt_start_time;
         }
         else
         {
-                dilated_running_time = (real_running_time - temp_past_physical_time) + task->past_virtual_time;
-                virt_time = dilated_running_time + task->virt_start_time;
+              dilated_running_time = (real_running_time - temp_past_physical_time) + task->past_virtual_time;
+              virt_time = dilated_running_time + task->virt_start_time;
         }
 
+        spin_unlock(&task->dialation_lock);
         return virt_time;
 
 }

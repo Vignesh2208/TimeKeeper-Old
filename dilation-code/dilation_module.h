@@ -162,9 +162,13 @@ struct timeline
     struct task_struct* user_proc; // the task_struct to send the 'finished' message to when the timeline has finished advaincing in time
   	wait_queue_head_t w_queue;
   	wait_queue_head_t pthread_queue;
+  	wait_queue_head_t progress_thread_queue;
+  	wait_queue_head_t unfreeze_proc_queue;
   	atomic_t stop_thread;
   	atomic_t done;
   	atomic_t pthread_done;
+  	atomic_t progress_thread_done;
+  	atomic_t hrtimer_done;
 	int force; // a flag to determine if the virtual time should be forced to be exact as the user expects or not
 	struct task_struct* thread; // the kernel thread associated with this timeline
 	struct task_struct* run_timeline_thread; // the kernel thread associated with this timeline
@@ -175,7 +179,7 @@ struct timeline
 #define DILATION_DIR "dilation"
 #define DILATION_FILE "status"
 
-#define EXP_CPUS 6
+#define EXP_CPUS 4
                           // How many processors are dedicated to the experiment. My system has 8, so I set it to 6 so 
                           //background tasks can run on the other 2.
                           // This needs to be >= 2 and your system needs to have at least 4 vCPUs
