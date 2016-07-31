@@ -5,14 +5,39 @@ GCC:=gcc
 RM:=rm
 
 .PHONY : clean
+nCpus=$(shell lscpu | grep "CPU(s):" | awk -F ' ' '{print $$2}')
 
-all: clean modules
+all: clean_all modules timekeeper_scripts
 
-obj-m:= TimeKeeper.o
-TimeKeeper-objs := dilation_module.o general_commands.o sync_experiment.o s3f_sync_experiment.o util.o hooked_functions.o hashmap.o linkedlist.o
+clean_all: clean_build clean_scripts
+
+build: clean_build modules
+
+setup_kernel:
+	@cd src/kernel_changes/linux-3.13.1; ./setup.sh;
+
+timekeeper_scripts:
+	@echo "Compiling TimeKeeper helper scripts ..."
+	@cd scripts; make;
+
+clean_scripts:
+	@echo "Cleaning old TimeKeeper helper scripts ..."
+	@cd scripts; make clean;	
 
 modules:
-	$(MAKE) -C $(KERNEL_SRC) M=$(SUBDIR) modules 
+	@python scripts/setup_module.py $(nCpus); 
+	$(MAKE) -C $(KERNEL_SRC) M=$(SUBDIR)/build modules 
 
-clean:
-	$(RM) -f *.ko *.o *.mod.c Module.symvers
+install:
+	sudo insmod build/TimeKeeper.ko
+
+uninstall:
+	sudo rmmod build/TimeKeeper.ko
+
+
+clean_build:
+	@echo "Cleaning old TimeKeeper build files ..."
+	@$(RM) -f build/*.ko build/*.o src/core/*.o src/utils/*.o build/*.mod.c build/Module.symvers build/modules.order;
+
+
+

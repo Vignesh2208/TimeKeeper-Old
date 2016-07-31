@@ -36,10 +36,13 @@
 ehthumbs.db
 Thumbs.db
 *~
-*.cmd
-*.tmp
-*.mod
+.*.o.cmd
+*.symvers
+.*.mod.o.cmd
 *.ko
+*.ko.cmd
+*.mod.c
+*.a
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
