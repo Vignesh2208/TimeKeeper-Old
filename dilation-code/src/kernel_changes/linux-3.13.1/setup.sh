@@ -3,6 +3,10 @@ base=$(pwd)/../../..
 
 sudo echo "Starting Kernel Setup. Continuing with sudo permissions."
 
+# Adding precise repository for qt3 dependencies
+echo "deb http://archive.ubuntu.com/ubuntu precise main universe multiverse" | sudo tee /etc/apt/sources.list.d/precise.list
+sudo apt-get update
+
 cd $base/scripts/bin
 echo "Compiling helper scripts"
 make 2>/dev/null
@@ -12,7 +16,7 @@ sudo cp print_time /bin/
 sudo cp x64_synchronizer /bin/
 
 echo "Installing required dependencies"
-sudo apt-get install git-core libncurses5 libncurses5-dev libelf-dev asciidoc binutils-dev linux-source qt3-dev-tools libqt3-mt-dev libncurses5 libncurses5-dev fakeroot build-essential crash kexec-tools makedumpfile kernel-wedge kernel-package
+sudo apt-get install git-core libncurses5 libncurses5-dev libelf-dev binutils-dev linux-source qt3-dev-tools libqt3-mt-dev fakeroot build-essential crash kexec-tools makedumpfile kernel-wedge kernel-package
 echo "Downloading Kernel 3.13.1 source to /src"
 mkdir -p /src
 cd /src

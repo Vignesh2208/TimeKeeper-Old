@@ -13,8 +13,11 @@ clean_all: clean_build clean_scripts
 
 build: clean_build modules
 
-setup_kernel:
+setup_kernel: timekeeper_scripts download_kernel
+
+download_kernel:
 	@cd src/kernel_changes/linux-3.13.1; ./setup.sh;
+
 
 timekeeper_scripts:
 	@echo "Compiling TimeKeeper helper scripts ..."
