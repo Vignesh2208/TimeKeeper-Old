@@ -1,6 +1,6 @@
 EXTRA_CFLAGS += 
 KERNEL_SRC:= /lib/modules/$(shell uname -r)/build
-SUBDIR= $(PWD)
+SUBDIR= $(shell pwd)
 GCC:=gcc
 RM:=rm
 
