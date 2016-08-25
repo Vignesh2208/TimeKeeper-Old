@@ -11,7 +11,7 @@ all: clean_all modules timekeeper_scripts
 
 clean_all: clean_build clean_scripts
 
-build: clean_build modules
+build: clean_build timekeeper_scripts modules
 
 setup_kernel: timekeeper_scripts download_kernel
 
