@@ -10,7 +10,8 @@ Outlined below are basic instructions. See the installation/usage guide found in
 1. Setup Kernel:
 
 	cd dilation-code
-	sudo make setup_kernel
+	sudo make setup_kernel (Note: choose kexec-tools to not handle reboots)
+	
 	
 	#The kernel_setup script will download Linux Kernel version 3.13.1 and required software dependencies, and store it in /src directory.
  	#Then it will modify the source code with the necessary changes.

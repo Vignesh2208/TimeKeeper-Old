@@ -143,7 +143,7 @@ struct timeline
 #define DILATION_DIR "dilation"
 #define DILATION_FILE "status"
 
-#define EXP_CPUS 6
+#define EXP_CPUS 4
                           // How many processors are dedicated to the experiment. My system has 8, so I set it to 6 so 
                           //background tasks can run on the other 2.
                           // This needs to be >= 2 and your system needs to have at least 4 vCPUs
